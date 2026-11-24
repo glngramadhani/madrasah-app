@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Owner Pusat Kendali - Madrasah Digital</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: linear-gradient(160deg, #faf7f0 0%, #f1ede2 50%, #e4efe9 100%);
+      background-attachment: fixed;
+      overflow-x: hidden;
+    }
+    .font-arab { font-family: 'Amiri', serif; }
+
+    .bg-islamic-lattice {
+      background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23059669' stroke-width='0.6' stroke-opacity='0.09'%3E%3Cpath d='M40 0l11.7 28.3L80 40l-28.3 11.7L40 80l-11.7-28.3L0 40l28.3-11.7z'/%3E%3Ccircle cx='40' cy='40' r='16'/%3E%3C/g%3E%3C/svg%3E");
+    }
+
+    .islamic-hero {
+      background: radial-gradient(circle at 75% 20%, #065f46 0%, #022c22 65%, #011c16 100%);
+      position: relative;
+    }
+    .islamic-hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23fbbf24' stroke-width='0.8' stroke-opacity='0.18'%3E%3Cpath d='M30 0l8.8 21.2L60 30l-21.2 8.8L30 60l-8.8-21.2L0 30l21.2-8.8z'/%3E%3Crect x='15' y='15' width='30' height='30'/%3E%3Crect x='15' y='15' width='30' height='30' transform='rotate(45 30 30)'/%3E%3C/g%3E%3C/svg%3E");
+      pointer-events: none;
+    }
+
+    @keyframes snappyPopIn {
+      0% { opacity: 0; transform: translate3d(0, 14px, 0) scale(0.97); }
+      100% { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+    }
+    @keyframes spinCW {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    @keyframes spinCCW {
+      from { transform: rotate(360deg); }
+      to { transform: rotate(0deg); }
+    }
+    @keyframes autoShimmer {
+      0%, 65% { transform: translateX(-140%) skewX(-20deg); }
+      100% { transform: translateX(260%) skewX(-20deg); }
+    }
+    @keyframes borderOrbit {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    @keyframes rippleWave {
+      0% { transform: scale(0); opacity: 0.5; }
+      100% { transform: scale(3.5); opacity: 0; }
+    }
+
+    .animate-snappy {
+      will-change: transform, opacity;
+      animation: snappyPopIn 0.32s cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
+    }
+    .mandala-cw { will-change: transform; animation: spinCW 28s linear infinite; }
+    .mandala-ccw { will-change: transform; animation: spinCCW 20s linear infinite; }
+
+    .btn-shimmer { position: relative; overflow: hidden; }
+    .btn-shimmer::after {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; width: 45%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.32), transparent);
+      transform: translateX(-140%) skewX(-20deg);
+      animation: autoShimmer 3.2s ease-in-out infinite;
+    }
+
+    .ripple-span {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(251, 191, 36, 0.45);
+      pointer-events: none;
+      animation: rippleWave 0.45s ease-out forwards;
+    }
+
+    .mihrab-aura {
+      position: relative;
+      border-radius: 1.75rem;
+      padding: 3px;
+      background: linear-gradient(120deg, #059669, #fbbf24, #d97706, #10b981, #fbbf24);
+      background-size: 250% 250%;
+      animation: borderOrbit 4s ease infinite;
+      box-shadow: 0 18px 36px -10px rgba(6, 78, 59, 0.22);
+    }
+
+    .mihrab-card {
+      border-top: 4px solid #d97706;
+      box-shadow: 0 14px 30px -10px rgba(6, 78, 59, 0.12);
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-islamic-lattice text-slate-800 pb-14">
+
+  <!-- HEADER DENGAN JARAK BAWAH LEGA (pb-24) -->
+  <header class="islamic-hero text-white pt-6 pb-24 px-4 rounded-b-[2.8rem] shadow-2xl border-b-4 border-amber-400 overflow-hidden">
+    <canvas id="noorCanvas" class="absolute inset-0 w-full h-full pointer-events-none z-0"></canvas>
+
+    <!-- Mandala Dual Layer -->
+    <svg class="mandala-cw absolute -right-14 -top-14 w-64 h-64 text-amber-300/15 pointer-events-none" viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="0.9">
+      <polygon points="100,10 125,75 190,100 125,125 100,190 75,125 10,100 75,75" />
+      <polygon points="100,10 125,75 190,100 125,125 100,190 75,125 10,100 75,75" transform="rotate(45 100 100)" />
+      <circle cx="100" cy="100" r="65" stroke-dasharray="4 4" />
+    </svg>
+    <svg class="mandala-ccw absolute -right-4 -top-4 w-44 h-44 text-emerald-200/20 pointer-events-none" viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="1">
+      <polygon points="100,20 120,80 180,100 120,120 100,180 80,120 20,100 80,80" />
+      <circle cx="100" cy="100" r="45" />
+    </svg>
+
+    <div class="max-w-4xl mx-auto relative z-10">
+      <div class="flex justify-between items-center mb-5 gap-2">
+        <a href="index.html" class="text-xs font-bold bg-white/15 hover:bg-white/25 border border-white/25 px-4 py-1.5 rounded-full transition">
+          ← Portal Utama
+        </a>
+        <span class="hidden sm:inline font-arab text-amber-300 text-xl drop-shadow">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم</span>
+        <div id="aksiHeaderOwner" class="hidden flex items-center gap-2">
+          <button onclick="bukaModalGantiMasterPin()"
+            class="text-xs font-bold bg-amber-400/25 hover:bg-amber-400/35 border border-amber-300/50 text-amber-200 px-3.5 py-1.5 rounded-full transition">
+            🔑 Ganti Master PIN
+          </button>
+          <button onclick="location.reload()"
+            class="text-xs font-bold bg-red-500/90 hover:bg-red-600 px-3.5 py-1.5 rounded-full transition">
+            Keluar ↪
+          </button>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3.5">
+        <div class="w-13 h-13 p-2.5 rounded-2xl bg-gradient-to-br from-amber-300 via-amber-400 to-amber-600 text-emerald-950 flex items-center justify-center shadow-lg shadow-amber-500/30 shrink-0">
+          <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+          </svg>
+        </div>
+        <div>
+          <span class="text-[10px] font-bold uppercase tracking-widest text-amber-300 block">SaaS Multi-Madrasah Management</span>
+          <h1 class="font-extrabold text-xl sm:text-2xl tracking-tight leading-snug">Pusat Kendali Owner (Superadmin)</h1>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-4xl mx-auto px-4 -mt-12 relative z-20">
+
+    <!-- LOGIN MASTER OWNER -->
+    <section id="loginOwnerSection" class="max-w-md mx-auto mihrab-aura animate-snappy">
+      <div class="bg-white p-7 rounded-[25px] relative overflow-hidden">
+        <div class="flex items-center justify-center gap-2 text-amber-500 text-xs mb-3">
+          <span class="h-px w-10 bg-amber-300"></span>
+          <span>۞</span>
+          <span class="font-arab text-lg text-emerald-800">أَهْلًا وَسَهْلًا</span>
+          <span>۞</span>
+          <span class="h-px w-10 bg-amber-300"></span>
+        </div>
+
+        <div class="text-center mb-6">
+          <div class="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-emerald-50 to-amber-50 border-2 border-amber-400 flex items-center justify-center text-emerald-900 mb-3 shadow-inner">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+            </svg>
+          </div>
+          <h2 class="font-extrabold text-xl text-emerald-950">Otorisasi Pemilik Sistem</h2>
+          <p class="text-xs text-slate-500 mt-1">Masukkan Master PIN Owner untuk mengelola seluruh lembaga madrasah.</p>
+        </div>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-emerald-800 mb-1.5 text-center">Master PIN Owner</label>
+            <input type="password" id="inputMasterPin" inputmode="numeric" placeholder="••••••"
+              onkeypress="if(event.key === 'Enter') loginOwner()"
+              class="w-full bg-amber-50/40 border-2 border-emerald-200 focus:border-amber-500 focus:bg-white rounded-2xl px-4 py-3.5 text-center text-2xl font-extrabold tracking-[0.45em] text-emerald-950 focus:outline-none focus:ring-4 focus:ring-amber-500/15 transition" />
+          </div>
+
+          <button onclick="loginOwner()"
+            class="btn-shimmer ripple-btn w-full bg-gradient-to-r from-emerald-900 via-emerald-800 to-teal-800 hover:from-emerald-950 hover:to-teal-900 text-white font-extrabold py-3.5 rounded-2xl shadow-lg shadow-emerald-900/25 transition active:scale-95">
+            Buka Pusat Kendali
+          </button>
+
+          <p class="text-[11px] text-slate-400 text-center">PIN Master awal: <strong class="text-slate-600">202600</strong></p>
+          <p id="errorOwner" class="hidden bg-red-50 border border-red-200 text-red-700 py-2 px-3 rounded-xl text-xs text-center font-semibold"></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- DASHBOARD SUPERADMIN -->
+    <section id="dashboardOwner" class="hidden space-y-5 animate-snappy">
+
+      <!-- Statistik Global -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-emerald-100 text-center">
+          <p class="text-[10px] font-bold uppercase text-slate-400">Total Madrasah</p>
+          <p id="statTotalMadrasah" class="font-extrabold text-2xl text-emerald-950 mt-0.5">0</p>
+        </div>
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-emerald-100 text-center">
+          <p class="text-[10px] font-bold uppercase text-slate-400">Layanan Aktif</p>
+          <p id="statMadrasahAktif" class="font-extrabold text-2xl text-emerald-600 mt-0.5">0</p>
+        </div>
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-emerald-100 text-center">
+          <p class="text-[10px] font-bold uppercase text-slate-400">Total Santri</p>
+          <p id="statGlobalSantri" class="font-extrabold text-2xl text-amber-600 mt-0.5">0</p>
+        </div>
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-emerald-100 text-center">
+          <p class="text-[10px] font-bold uppercase text-slate-400">Total Ustadz</p>
+          <p id="statGlobalUstadz" class="font-extrabold text-2xl text-teal-700 mt-0.5">0</p>
+        </div>
+      </div>
+
+      <!-- Form Daftarkan Madrasah Baru -->
+      <div class="bg-white p-6 rounded-3xl mihrab-card space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="font-extrabold text-base text-emerald-950">+ Daftarkan Lembaga Madrasah Baru</h3>
+            <p class="text-xs text-slate-500">Otomatis membuat link portal unik beserta akun Admin awal.</p>
+          </div>
+          <span class="hidden sm:inline-block bg-amber-100 text-amber-900 border border-amber-300 text-[11px] font-bold px-3 py-1 rounded-full">
+            Auto-Setup Admin
+          </span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-1">Nama Madrasah / TPQ / Ponpes</label>
+            <input type="text" id="baruNamaMadrasah" oninput="autoSlugKode()" placeholder="Contoh: Madrasah Al-Hikmah"
+              class="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm focus:border-emerald-600 focus:outline-none" />
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-1">Kode Unik URL (?m=kode)</label>
+            <input type="text" id="baruKodeMadrasah" placeholder="Contoh: al-hikmah"
+              class="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm font-bold lowercase text-emerald-900 bg-emerald-50/40 focus:border-emerald-600 focus:outline-none" />
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-1">Alamat / Kota</label>
+            <input type="text" id="baruAlamatMadrasah" placeholder="Contoh: Jl. Masjid Agung No. 12"
+              class="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm focus:border-emerald-600 focus:outline-none" />
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-1">Buat PIN Admin Awal (Angka)</label>
+            <input type="text" id="baruPinAdmin" inputmode="numeric" value="1234" placeholder="Contoh: 1234"
+              class="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm font-bold focus:border-emerald-600 focus:outline-none" />
+          </div>
+        </div>
+
+        <button onclick="tambahMadrasahBaru()" id="btnSimpanMadrasah"
+          class="btn-shimmer ripple-btn w-full sm:w-auto bg-gradient-to-r from-emerald-800 via-emerald-700 to-teal-700 text-white font-extrabold text-xs px-6 py-3.5 rounded-xl shadow-lg shadow-emerald-800/20 transition active:scale-95">
+          Terbitkan Portal Madrasah Baru
+        </button>
+      </div>
+
+      <!-- Daftar Seluruh Madrasah -->
+      <div class="bg-white p-6 rounded-3xl shadow-sm border border-emerald-100 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <h3 class="font-extrabold text-base text-emerald-950">🕌 Daftar Madrasah Terdaftar</h3>
+          <input type="text" id="cariMadrasahInput" oninput="renderDaftarMadrasah()" placeholder="Cari nama atau kode..."
+            class="border border-slate-300 rounded-xl px-3.5 py-2 text-xs focus:border-emerald-600 focus:outline-none sm:w-64" />
+        </div>
+
+        <div id="listMadrasahContainer" class="space-y-3">
+          <p class="text-xs text-slate-400 text-center py-6">Memuat daftar madrasah...</p>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- MODAL GANTI MASTER PIN OWNER -->
+  <div id="modalGantiMasterPin" onclick="tutupModalGantiMasterPin()" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
+    <div onclick="event.stopPropagation()" class="bg-white p-6 rounded-3xl max-w-sm w-full space-y-4 shadow-2xl border-t-4 border-amber-500 animate-snappy">
+      <div class="flex justify-between items-center">
+        <h3 class="font-extrabold text-base text-emerald-950">🔑 Ubah Master PIN Owner</h3>
+        <button onclick="tutupModalGantiMasterPin()" class="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 font-bold text-xs">✕</button>
+      </div>
+      <p class="text-xs text-slate-500">Masukkan kombinasi Master PIN baru (minimal 4 angka).</p>
+      <input type="text" id="inputMasterPinBaru" inputmode="numeric" placeholder="Ketik PIN Baru"
+        class="w-full border-2 border-slate-200 focus:border-emerald-600 rounded-2xl px-4 py-3 text-center text-lg font-bold tracking-widest focus:outline-none" />
+      <button onclick="simpanMasterPinBaru()"
+        class="btn-shimmer ripple-btn w-full bg-emerald-800 hover:bg-emerald-900 text-white font-bold py-3 rounded-2xl shadow transition">
+        Simpan Master PIN
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // ==========================================
+    // 1. PARTIKEL CAHAYA EMAS RINGAN (60 FPS)
+    // ==========================================
+    (function initNoorParticles() {
+      const canvas = document.getElementById('noorCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      let w, h, particles = [];
+
+      const sprite = document.createElement('canvas');
+      sprite.width = sprite.height = 24;
+      const sCtx = sprite.getContext('2d');
+      const grad = sCtx.createRadialGradient(12, 12, 0, 12, 12, 12);
+      grad.addColorStop(0, 'rgba(254, 240, 138, 1)');
+      grad.addColorStop(0.45, 'rgba(251, 191, 36, 0.5)');
+      grad.addColorStop(1, 'rgba(251, 191, 36, 0)');
+      sCtx.fillStyle = grad;
+      sCtx.fillRect(0, 0, 24, 24);
+
+      function resize() {
+        w = canvas.width = canvas.offsetWidth;
+        h = canvas.height = canvas.offsetHeight;
+      }
+      window.addEventListener('resize', resize);
+      resize();
+
+      for (let i = 0; i < 30; i++) {
+        particles.push({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          size: Math.random() * 14 + 8,
+          vy: -(Math.random() * 0.7 + 0.35),
+          phase: Math.random() * Math.PI * 2,
+          alpha: Math.random() * 0.65 + 0.3
+        });
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, w, h);
+        for (let i = 0; i < particles.length; i++) {
+          const p = particles[i];
+          p.y += p.vy;
+          p.phase += 0.035;
+          const xPos = p.x + Math.sin(p.phase) * 14;
+          if (p.y < -20) { p.y = h + 15; p.x = Math.random() * w; }
+
+          ctx.globalAlpha = p.alpha;
+          ctx.drawImage(sprite, xPos - p.size / 2, p.y - p.size / 2, p.size, p.size);
+        }
+        requestAnimationFrame(draw);
+      }
+      draw();
+    })();
+
+    document.addEventListener('click', e => {
+      const target = e.target.closest('.ripple-btn');
+      if (!target) return;
+      const rect = target.getBoundingClientRect();
+      const size = Math.max(rect.width, rect.height);
+      const ripple = document.createElement('span');
+      ripple.className = 'ripple-span';
+      ripple.style.width = ripple.style.height = `${size}px`;
+      ripple.style.left = `${e.clientX - rect.left - size / 2}px`;
+      ripple.style.top = `${e.clientY - rect.top - size / 2}px`;
+      target.appendChild(ripple);
+      setTimeout(() => ripple.remove(), 450);
+    });
+
+    // ==========================================
+    // 2. KONEKSI SUPABASE & LOGIKA SUPERADMIN
+    // ==========================================
+    const SUPABASE_URL = 'https://fukllqirpdizevgyderw.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_2bHlj80Et_QGIWzEBNyJbg_u0ZWf8xi';
+    const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let semuaMadrasah = [];
+    let adminPinMap = {};
+
+    function getMasterPin() {
+      return localStorage.getItem('madrasah_owner_master_pin') || '202600';
+    }
+
+    function loginOwner() {
+      const input = document.getElementById('inputMasterPin').value.trim();
+      const errEl = document.getElementById('errorOwner');
+
+      if (input !== getMasterPin()) {
+        errEl.textContent = 'Master PIN Owner salah!';
+        errEl.classList.remove('hidden');
+        return;
+      }
+
+      errEl.classList.add('hidden');
+      document.getElementById('loginOwnerSection').classList.add('hidden');
+      document.getElementById('dashboardOwner').classList.remove('hidden');
+      document.getElementById('aksiHeaderOwner').classList.remove('hidden');
+
+      muatDataGlobal();
+    }
+
+    function bukaModalGantiMasterPin() {
+      document.getElementById('inputMasterPinBaru').value = '';
+      document.getElementById('modalGantiMasterPin').classList.remove('hidden');
+    }
+
+    function tutupModalGantiMasterPin() {
+      document.getElementById('modalGantiMasterPin').classList.add('hidden');
+    }
+
+    function simpanMasterPinBaru() {
+      const pinBaru = document.getElementById('inputMasterPinBaru').value.trim();
+      if (pinBaru.length < 4) return alert('Master PIN baru minimal 4 angka.');
+      localStorage.setItem('madrasah_owner_master_pin', pinBaru);
+      tutupModalGantiMasterPin();
+      alert(`Master PIN Owner berhasil diubah menjadi: ${pinBaru}`);
+    }
+
+    function autoSlugKode() {
+      const nama = document.getElementById('baruNamaMadrasah').value;
+      const slug = nama
+        .toLowerCase()
+        .replace(/^madrasah\s+/i, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+      document.getElementById('baruKodeMadrasah').value = slug;
+    }
+
+    async function muatDataGlobal() {
+      const [resMadrasah, resAdmin, resSantri, resUstadz] = await Promise.all([
+        db.from('madrasah').select('*').order('id', { ascending: false }),
+        db.from('admin').select('*'),
+        db.from('siswa').select('id', { count: 'exact', head: true }),
+        db.from('ustadz').select('id', { count: 'exact', head: true })
+      ]);
+
+      semuaMadrasah = resMadrasah.data || [];
+      adminPinMap = {};
+      (resAdmin.data || []).forEach(a => {
+        adminPinMap[a.madrasah_id] = a;
+      });
+
+      document.getElementById('statTotalMadrasah').textContent = semuaMadrasah.length;
+      document.getElementById('statMadrasahAktif').textContent = semuaMadrasah.filter(m => m.status_aktif).length;
+      document.getElementById('statGlobalSantri').textContent = resSantri.count || 0;
+      document.getElementById('statGlobalUstadz').textContent = resUstadz.count || 0;
+
+      renderDaftarMadrasah();
+    }
+
+    function renderDaftarMadrasah() {
+      const keyword = document.getElementById('cariMadrasahInput').value.trim().toLowerCase();
+      const container = document.getElementById('listMadrasahContainer');
+
+      const filtered = semuaMadrasah.filter(m =>
+        m.nama_madrasah.toLowerCase().includes(keyword) ||
+        m.kode_madrasah.toLowerCase().includes(keyword)
+      );
+
+      if (filtered.length === 0) {
+        container.innerHTML = '<p class="text-xs text-slate-400 text-center py-6">Tidak ada data madrasah ditemukan.</p>';
+        return;
+      }
+
+      const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+
+      container.innerHTML = filtered.map(m => {
+        const aktif = m.status_aktif;
+        const adminData = adminPinMap[m.id];
+        const pinAdminTampil = adminData ? adminData.pin_admin : 'Belum ada';
+        const linkPortal = `${baseUrl}index.html?m=${m.kode_madrasah}`;
+
+        return `
+          <div class="bg-emerald-50/40 p-4 rounded-2xl border ${aktif ? 'border-emerald-200' : 'border-red-200 bg-red-50/30'} space-y-3">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <div class="flex items-center gap-2 flex-wrap">
+                  <h4 class="font-extrabold text-base text-emerald-950">${m.nama_madrasah}</h4>
+                  <span class="${aktif ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-700'} text-[10px] font-extrabold px-2.5 py-0.5 rounded-full">
+                    ${aktif ? '● AKTIF' : '● NONAKTIF'}
+                  </span>
+                </div>
+                <p class="text-xs text-slate-500 mt-0.5">
+                  Kode: <strong class="text-emerald-800">${m.kode_madrasah}</strong> • PIN Admin: <strong class="text-amber-700">${pinAdminTampil}</strong> • ${m.alamat || 'Alamat belum diisi'}
+                </p>
+              </div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-1.5 pt-1 border-t border-emerald-200/60">
+              <button onclick="salinLinkPortal('${linkPortal}')"
+                class="ripple-btn text-[11px] bg-white border border-emerald-300 hover:bg-emerald-50 text-emerald-900 font-bold px-3 py-1.5 rounded-lg transition">
+                🔗 Salin Link
+              </button>
+              <a href="index.html?m=${m.kode_madrasah}" target="_blank"
+                class="text-[11px] bg-emerald-700 hover:bg-emerald-800 text-white font-bold px-3 py-1.5 rounded-lg transition">
+                🌐 Portal
+              </a>
+              <a href="admin.html?m=${m.kode_madrasah}" target="_blank"
+                class="text-[11px] bg-slate-800 hover:bg-slate-900 text-amber-300 font-bold px-3 py-1.5 rounded-lg transition">
+                🛡️ Admin
+              </a>
+              <button onclick="resetPinAdmin(${m.id}, '${m.nama_madrasah.replace(/'/g, "\\'")}')"
+                class="text-[11px] bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold px-3 py-1.5 rounded-lg transition">
+                🔑 Reset PIN
+              </button>
+              <button onclick="toggleStatusMadrasah(${m.id}, ${aktif})"
+                class="text-[11px] ${aktif ? 'bg-orange-100 hover:bg-orange-200 text-orange-800' : 'bg-emerald-100 hover:bg-emerald-200 text-emerald-800'} font-bold px-3 py-1.5 rounded-lg transition">
+                ${aktif ? '⏸️ Nonaktifkan' : '▶️ Aktifkan'}
+              </button>
+              <button onclick="hapusMadrasah(${m.id}, '${m.nama_madrasah.replace(/'/g, "\\'")}')"
+                class="text-[11px] bg-red-100 hover:bg-red-200 text-red-700 font-bold px-2.5 py-1.5 rounded-lg transition">
+                🗑️ Hapus
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function salinLinkPortal(url) {
+      navigator.clipboard.writeText(url).then(() => {
+        alert(`Tautan portal berhasil disalin:\n${url}`);
+      });
+    }
+
+    async function tambahMadrasahBaru() {
+      const nama = document.getElementById('baruNamaMadrasah').value.trim();
+      const kode = document.getElementById('baruKodeMadrasah').value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
+      const alamat = document.getElementById('baruAlamatMadrasah').value.trim() || '-';
+      const pinAdmin = document.getElementById('baruPinAdmin').value.trim();
+      const btn = document.getElementById('btnSimpanMadrasah');
+
+      if (!nama || !kode || !pinAdmin) {
+        return alert('Nama madrasah, kode unik URL, dan PIN Admin awal wajib diisi!');
+      }
+
+      btn.textContent = 'Menerbitkan portal...';
+      btn.disabled = true;
+
+      const { data: madrasahBaru, error } = await db
+        .from('madrasah')
+        .insert([{
+          nama_madrasah: nama,
+          kode_madrasah: kode,
+          alamat: alamat,
+          status_aktif: true
+        }])
+        .select('*')
+        .single();
+
+      if (error) {
+        btn.textContent = 'Terbitkan Portal Madrasah Baru';
+        btn.disabled = false;
+        return alert('Gagal membuat madrasah (pastikan kode unik belum dipakai): ' + error.message);
+      }
+
+      // Otomatis buatkan akun Admin untuk madrasah baru ini
+      await db.from('admin').insert([{
+        madrasah_id: madrasahBaru.id,
+        pin_admin: pinAdmin
+      }]);
+
+      btn.textContent = 'Terbitkan Portal Madrasah Baru';
+      btn.disabled = false;
+
+      document.getElementById('baruNamaMadrasah').value = '';
+      document.getElementById('baruKodeMadrasah').value = '';
+      document.getElementById('baruAlamatMadrasah').value = '';
+      document.getElementById('baruPinAdmin').value = '1234';
+
+      await muatDataGlobal();
+      alert(`Portal "${nama}" berhasil diterbitkan!\nKode URL: ?m=${kode}\nPIN Admin: ${pinAdmin}`);
+    }
+
+    async function resetPinAdmin(madrasahId, namaMadrasah) {
+      const pinBaru = prompt(`Masukkan PIN Admin baru untuk ${namaMadrasah} (minimal 4 angka):`);
+      if (!pinBaru || pinBaru.trim().length < 4) return;
+
+      const existing = adminPinMap[madrasahId];
+      if (existing) {
+        await db.from('admin').update({ pin_admin: pinBaru.trim() }).eq('id', existing.id);
+      } else {
+        await db.from('admin').insert([{ madrasah_id: madrasahId, pin_admin: pinBaru.trim() }]);
+      }
+
+      await muatDataGlobal();
+      alert(`PIN Admin ${namaMadrasah} berhasil diatur menjadi: ${pinBaru.trim()}`);
+    }
+
+    async function toggleStatusMadrasah(id, statusSekarang) {
+      await db.from('madrasah').update({ status_aktif: !statusSekarang }).eq('id', id);
+      muatDataGlobal();
+    }
+
+    async function hapusMadrasah(id, nama) {
+      if (!confirm(`PERINGATAN: Yakin ingin menghapus "${nama}" secara permanen?`)) return;
+      const { error } = await db.from('madrasah').delete().eq('id', id);
+      if (error) return alert('Gagal menghapus (hapus data santri/jadwal di dalamnya terlebih dahulu): ' + error.message);
+      muatDataGlobal();
+    }
+  </script>
+</body>
+</html>

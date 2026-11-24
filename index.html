@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Madrasah Digital - Portal Terpadu</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: linear-gradient(160deg, #faf7f0 0%, #f1ede2 50%, #e4efe9 100%);
+      background-attachment: fixed;
+      overflow-x: hidden;
+    }
+    .font-arab { font-family: 'Amiri', serif; }
+
+    .bg-islamic-lattice {
+      background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23059669' stroke-width='0.6' stroke-opacity='0.09'%3E%3Cpath d='M40 0l11.7 28.3L80 40l-28.3 11.7L40 80l-11.7-28.3L0 40l28.3-11.7z'/%3E%3Ccircle cx='40' cy='40' r='16'/%3E%3C/g%3E%3C/svg%3E");
+    }
+
+    .islamic-hero {
+      background: radial-gradient(circle at 50% 20%, #059669 0%, #064e3b 52%, #022c22 100%);
+      position: relative;
+    }
+    .islamic-hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23fbbf24' stroke-width='0.75' stroke-opacity='0.14'%3E%3Cpath d='M30 0l8.8 21.2L60 30l-21.2 8.8L30 60l-8.8-21.2L0 30l21.2-8.8z'/%3E%3Crect x='15' y='15' width='30' height='30'/%3E%3Crect x='15' y='15' width='30' height='30' transform='rotate(45 30 30)'/%3E%3C/g%3E%3C/svg%3E");
+      pointer-events: none;
+    }
+
+    @keyframes snappyPopIn {
+      0% { opacity: 0; transform: translate3d(0, 14px, 0) scale(0.97); }
+      100% { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+    }
+    @keyframes spinCW {
+      from { transform: translate(-50%, -50%) rotate(0deg); }
+      to { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+    @keyframes spinCCW {
+      from { transform: translate(-50%, -50%) rotate(360deg); }
+      to { transform: translate(-50%, -50%) rotate(0deg); }
+    }
+    @keyframes swayLantern {
+      0%, 100% { transform: rotate(-6deg); }
+      50% { transform: rotate(6deg); }
+    }
+    @keyframes candlePulse {
+      0%, 100% { opacity: 0.78; }
+      50% { opacity: 1; }
+    }
+    @keyframes floatEmblem {
+      0%, 100% { transform: translate3d(0, 0, 0); }
+      50% { transform: translate3d(0, -6px, 0); }
+    }
+    @keyframes autoShimmer {
+      0%, 65% { transform: translateX(-140%) skewX(-20deg); }
+      100% { transform: translateX(260%) skewX(-20deg); }
+    }
+    @keyframes borderOrbit {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    @keyframes rippleWave {
+      0% { transform: scale(0); opacity: 0.5; }
+      100% { transform: scale(3.5); opacity: 0; }
+    }
+
+    .animate-snappy {
+      will-change: transform, opacity;
+      animation: snappyPopIn 0.32s cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
+    }
+    .delay-1 { animation-delay: 0.04s; opacity: 0; }
+    .delay-2 { animation-delay: 0.08s; opacity: 0; }
+    .delay-3 { animation-delay: 0.12s; opacity: 0; }
+    .delay-4 { animation-delay: 0.16s; opacity: 0; }
+
+    .mandala-outer { will-change: transform; animation: spinCW 32s linear infinite; }
+    .mandala-mid { will-change: transform; animation: spinCCW 22s linear infinite; }
+    .mandala-inner { will-change: transform; animation: spinCW 16s linear infinite; }
+
+    .animate-lantern { transform-origin: top center; will-change: transform; animation: swayLantern 3.2s ease-in-out infinite; }
+    .animate-lantern-delay { transform-origin: top center; will-change: transform; animation: swayLantern 3.8s ease-in-out 0.8s infinite; }
+    .lantern-core { animation: candlePulse 1.8s ease-in-out infinite; }
+    .animate-emblem { will-change: transform; animation: floatEmblem 3s ease-in-out infinite; }
+
+    .tilt-card {
+      transform-style: preserve-3d;
+      transition: transform 0.14s ease-out, border-color 0.2s ease, box-shadow 0.2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .tilt-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(240px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(251, 191, 36, 0.22), transparent 65%);
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      pointer-events: none;
+      z-index: 1;
+    }
+    .tilt-card:hover::before { opacity: 1; }
+
+    .btn-shimmer { position: relative; overflow: hidden; }
+    .btn-shimmer::after {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; width: 45%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.32), transparent);
+      transform: translateX(-140%) skewX(-20deg);
+      animation: autoShimmer 3.2s ease-in-out infinite;
+    }
+
+    .ripple-span {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(251, 191, 36, 0.45);
+      pointer-events: none;
+      animation: rippleWave 0.45s ease-out forwards;
+    }
+
+    .mihrab-aura {
+      position: relative;
+      border-radius: 1.75rem;
+      padding: 3px;
+      background: linear-gradient(120deg, #059669, #fbbf24, #d97706, #10b981, #fbbf24);
+      background-size: 250% 250%;
+      animation: borderOrbit 4s ease infinite;
+      box-shadow: 0 18px 36px -10px rgba(6, 78, 59, 0.2);
+    }
+
+    .mihrab-card {
+      border-top: 4px solid #d97706;
+      box-shadow: 0 14px 30px -10px rgba(6, 78, 59, 0.12);
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-islamic-lattice text-slate-800 pb-14">
+
+  <!-- HEADER HERO -->
+  <header class="islamic-hero text-white pt-7 pb-24 px-4 rounded-b-[3.2rem] shadow-2xl border-b-4 border-amber-400 overflow-hidden">
+    
+    <canvas id="noorCanvas" class="absolute inset-0 w-full h-full pointer-events-none z-0"></canvas>
+
+    <!-- Mandala Geometris 3 Lapis -->
+    <svg class="mandala-outer absolute top-1/2 left-1/2 w-[500px] h-[500px] text-amber-300/12 pointer-events-none" viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="0.6">
+      <polygon points="100,6 128,72 194,100 128,128 100,194 72,128 6,100 72,72" />
+      <polygon points="100,6 128,72 194,100 128,128 100,194 72,128 6,100 72,72" transform="rotate(45 100 100)" />
+      <circle cx="100" cy="100" r="82" stroke-dasharray="3 5" />
+    </svg>
+
+    <svg class="mandala-mid absolute top-1/2 left-1/2 w-[320px] h-[320px] text-emerald-200/15 pointer-events-none" viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="0.9">
+      <polygon points="100,15 122,78 185,100 122,122 100,185 78,122 15,100 78,78" />
+      <polygon points="100,15 122,78 185,100 122,122 100,185 78,122 15,100 78,78" transform="rotate(22.5 100 100)" />
+      <circle cx="100" cy="100" r="56" />
+    </svg>
+
+    <svg class="mandala-inner absolute top-1/2 left-1/2 w-[200px] h-[200px] text-amber-400/15 pointer-events-none" viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="1.1">
+      <rect x="45" y="45" width="110" height="110" />
+      <rect x="45" y="45" width="110" height="110" transform="rotate(45 100 100)" />
+    </svg>
+
+    <!-- Lentera Fanoos Kiri -->
+    <div class="animate-lantern absolute top-0 left-4 sm:left-12 pointer-events-none z-10">
+      <svg class="w-9 h-24" viewBox="0 0 40 110" fill="none">
+        <line x1="20" y1="0" x2="20" y2="30" stroke="#fbbf24" stroke-width="1.6"/>
+        <path d="M11 38 L20 28 L29 38 L33 64 L20 80 L7 64 Z" fill="#064e3b" stroke="#fbbf24" stroke-width="2"/>
+        <circle class="lantern-core" cx="20" cy="54" r="6" fill="#fef08a"/>
+        <circle cx="20" cy="85" r="2.8" fill="#fbbf24"/>
+      </svg>
+    </div>
+
+    <!-- Lentera Fanoos Kanan -->
+    <div class="animate-lantern-delay absolute top-0 right-4 sm:right-12 pointer-events-none z-10">
+      <svg class="w-9 h-28" viewBox="0 0 40 120" fill="none">
+        <line x1="20" y1="0" x2="20" y2="42" stroke="#fbbf24" stroke-width="1.6"/>
+        <path d="M11 50 L20 40 L29 50 L33 76 L20 92 L7 76 Z" fill="#064e3b" stroke="#fbbf24" stroke-width="2"/>
+        <circle class="lantern-core" cx="20" cy="66" r="6" fill="#fef08a"/>
+        <circle cx="20" cy="97" r="2.8" fill="#fbbf24"/>
+      </svg>
+    </div>
+
+    <!-- Konten Utama Header -->
+    <div class="max-w-lg mx-auto text-center space-y-2.5 relative z-10">
+      <p class="font-arab text-amber-300 text-2xl sm:text-3xl drop-shadow">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم</p>
+      
+      <div class="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br from-amber-200 via-amber-400 to-amber-600 p-0.5 shadow-xl shadow-amber-500/30 animate-emblem">
+        <div class="w-full h-full bg-gradient-to-b from-emerald-900 to-emerald-950 rounded-[22px] flex items-center justify-center relative overflow-hidden">
+          <div class="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(251,191,36,0.35),transparent_70%)]"></div>
+          <svg class="w-11 h-11 text-amber-300 relative z-10" viewBox="0 0 64 64" fill="currentColor">
+            <path d="M32 6c-1.5 3.5-6 6-6 11 0 3.3 2.7 6 6 6s6-2.7 6-6c0-5-4.5-7.5-6-11zm-18 26c0-8 8-13 18-13s18 5 18 13v20H14V32zm-8 6h5v14H6V38zm47 0h5v14h-5V38zM27 52V41c0-2.8 2.2-5 5-5s5 2.2 5 5v11H27z"/>
+          </svg>
+        </div>
+      </div>
+
+      <h1 id="headerNamaMadrasah" class="font-extrabold text-2xl sm:text-3xl tracking-tight pt-1 drop-shadow">Madrasah Digital</h1>
+      
+      <div class="flex items-center justify-center gap-2.5 text-amber-300 text-xs">
+        <span class="h-px w-14 bg-gradient-to-r from-transparent via-amber-400 to-amber-300"></span>
+        <span>۞</span>
+        <span class="h-px w-14 bg-gradient-to-l from-transparent via-amber-400 to-amber-300"></span>
+      </div>
+
+      <p id="headerAlamatMadrasah" class="text-xs text-emerald-100/95 max-w-xs mx-auto leading-relaxed">
+        Portal Informasi Terpadu Santri, Ustadz, Jadwal & Administrasi
+      </p>
+    </div>
+  </header>
+
+  <main class="max-w-lg mx-auto px-4 -mt-12 relative z-20">
+
+    <!-- LOADING AWAL -->
+    <div id="loadingBox" class="mihrab-aura animate-snappy">
+      <div class="bg-white p-7 rounded-[25px] text-center space-y-2.5">
+        <div class="w-9 h-9 border-4 border-emerald-700 border-t-amber-400 rounded-full animate-spin mx-auto"></div>
+        <p class="text-xs font-bold text-emerald-950">Menyiapkan portal madrasah...</p>
+      </div>
+    </div>
+
+    <!-- JIKA DIBUKA TANPA PARAMETER ?m= -->
+    <section id="pilihMadrasahBox" class="hidden mihrab-aura animate-snappy">
+      <div class="bg-white p-7 rounded-[25px] space-y-4">
+        <div class="text-center">
+          <p class="font-arab text-xl text-amber-600">أَهْلًا وَسَهْلًا</p>
+          <h2 class="font-extrabold text-lg text-emerald-950">Masukkan Kode Madrasah</h2>
+          <p class="text-xs text-slate-500 mt-1">Ketik kode unik madrasah Anda untuk membuka layanan.</p>
+        </div>
+        <input type="text" id="inputKodeManual" placeholder="Contoh: al-ikhlas"
+          onkeypress="if(event.key === 'Enter') masukKodeManual()"
+          class="w-full bg-amber-50/40 border-2 border-emerald-200 focus:border-emerald-600 rounded-2xl px-4 py-3.5 text-center text-sm font-bold lowercase focus:outline-none focus:ring-4 focus:ring-emerald-500/15 transition" />
+        <button onclick="masukKodeManual()"
+          class="btn-shimmer ripple-btn w-full bg-gradient-to-r from-emerald-800 via-emerald-700 to-teal-700 text-white font-extrabold py-3.5 rounded-2xl shadow-lg shadow-emerald-800/25 transition active:scale-95">
+          Buka Portal Madrasah
+        </button>
+        <p id="errorKodeMadrasah" class="hidden text-xs text-red-600 text-center font-semibold"></p>
+      </div>
+    </section>
+
+    <!-- JIKA AKUN MADRASAH DINONAKTIFKAN OWNER -->
+    <section id="nonaktifBox" class="hidden bg-white p-7 rounded-3xl shadow-xl border-2 border-red-200 text-center space-y-3 animate-snappy">
+      <div class="w-14 h-14 mx-auto rounded-full bg-red-50 text-red-600 flex items-center justify-center text-2xl">🔒</div>
+      <h2 class="font-extrabold text-base text-red-700">Layanan Madrasah Dinonaktifkan Sementara</h2>
+      <p class="text-xs text-slate-500 leading-relaxed">Masa aktif sistem untuk madrasah ini telah berakhir atau sedang dibekukan. Silakan hubungi pengelola layanan.</p>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAMPILAN 1: MENU UTAMA (3D TILT CARDS)     -->
+    <!-- ========================================== -->
+    <section id="viewHome" class="hidden space-y-4">
+      <div class="grid grid-cols-2 gap-3.5">
+        
+        <a id="linkKeUstadz" href="ustadz.html"
+          class="tilt-card ripple-btn animate-snappy delay-1 group bg-white p-5 rounded-3xl shadow-lg border border-emerald-200/90 hover:border-amber-400 flex flex-col justify-between">
+          <div class="absolute -right-5 -bottom-5 w-24 h-24 rounded-full bg-emerald-500/5 group-hover:bg-amber-400/15 transition-all duration-300"></div>
+          <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-700 to-emerald-950 text-amber-300 flex items-center justify-center mb-3.5 shadow-md group-hover:scale-110 group-hover:rotate-3 transition-transform duration-200 relative z-10">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+          </div>
+          <div class="relative z-10">
+            <span class="text-[10px] font-extrabold uppercase tracking-wider text-emerald-600">Pengajar</span>
+            <h2 class="font-extrabold text-emerald-950 text-base">Portal Ustadz</h2>
+            <p class="text-[11px] text-slate-500 mt-0.5 leading-snug">Absensi foto & jadwal mengajar</p>
+          </div>
+        </a>
+
+        <button onclick="bukaHalaman('viewWali')"
+          class="tilt-card ripple-btn animate-snappy delay-2 text-left group bg-white p-5 rounded-3xl shadow-lg border border-amber-200/90 hover:border-amber-500 flex flex-col justify-between">
+          <div class="absolute -right-5 -bottom-5 w-24 h-24 rounded-full bg-amber-500/5 group-hover:bg-amber-400/15 transition-all duration-300"></div>
+          <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-700 text-white flex items-center justify-center mb-3.5 shadow-md group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-200 relative z-10">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+          </div>
+          <div class="relative z-10">
+            <span class="text-[10px] font-extrabold uppercase tracking-wider text-amber-600">Orang Tua</span>
+            <h2 class="font-extrabold text-emerald-950 text-base">Wali Santri</h2>
+            <p class="text-[11px] text-slate-500 mt-0.5 leading-snug">Absen, ajukan izin & tagihan SPP</p>
+          </div>
+        </button>
+
+        <button onclick="bukaHalaman('viewJadwal')"
+          class="tilt-card ripple-btn animate-snappy delay-3 text-left group bg-white p-5 rounded-3xl shadow-lg border border-teal-200/90 hover:border-teal-500 flex flex-col justify-between">
+          <div class="absolute -right-5 -bottom-5 w-24 h-24 rounded-full bg-teal-500/5 group-hover:bg-teal-400/15 transition-all duration-300"></div>
+          <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-teal-600 to-teal-900 text-amber-200 flex items-center justify-center mb-3.5 shadow-md group-hover:scale-110 group-hover:rotate-3 transition-transform duration-200 relative z-10">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+          </div>
+          <div class="relative z-10">
+            <span class="text-[10px] font-extrabold uppercase tracking-wider text-teal-600">Akademik</span>
+            <h2 class="font-extrabold text-emerald-950 text-base">Jadwal Pelajaran</h2>
+            <p class="text-[11px] text-slate-500 mt-0.5 leading-snug">Lihat jadwal kelas & pengajar</p>
+          </div>
+        </button>
+
+        <a id="linkKeAdmin" href="admin.html"
+          class="tilt-card ripple-btn animate-snappy delay-4 group bg-white p-5 rounded-3xl shadow-lg border border-slate-200 hover:border-emerald-600 flex flex-col justify-between">
+          <div class="absolute -right-5 -bottom-5 w-24 h-24 rounded-full bg-slate-500/5 group-hover:bg-emerald-400/15 transition-all duration-300"></div>
+          <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-slate-700 to-slate-950 text-amber-300 flex items-center justify-center mb-3.5 shadow-md group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-200 relative z-10">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+            </svg>
+          </div>
+          <div class="relative z-10">
+            <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">Pengurus</span>
+            <h2 class="font-extrabold text-emerald-950 text-base">Admin & Keuangan</h2>
+            <p class="text-[11px] text-slate-500 mt-0.5 leading-snug">Kelola data, SPP & rekap absen</p>
+          </div>
+        </a>
+
+      </div>
+
+      <!-- Banner Hadits Islami -->
+      <div class="animate-snappy delay-4 bg-gradient-to-r from-emerald-950 via-emerald-900 to-teal-950 text-emerald-100 p-4 rounded-3xl border border-amber-400/40 shadow-xl flex items-center justify-between gap-3 relative overflow-hidden">
+        <div class="space-y-0.5 relative z-10">
+          <p class="font-arab text-amber-300 text-base">خَيْرُكُمْ مَنْ تَعَلَّمَ الْقُرْآنَ وَعَلَّمَهُ</p>
+          <p class="text-[11px] text-emerald-200/90">"Sebaik-baik kalian adalah yang belajar Al-Qur'an dan mengajarkannya."</p>
+        </div>
+        <button onclick="gantiMadrasah()" class="relative z-10 text-[10px] font-bold bg-white/10 hover:bg-amber-400 hover:text-emerald-950 text-amber-300 px-3 py-1.5 rounded-full border border-amber-300/30 shrink-0 transition">
+          Ganti Kode
+        </button>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAMPILAN 2: LIHAT JADWAL PELAJARAN         -->
+    <!-- ========================================== -->
+    <section id="viewJadwal" class="hidden space-y-4 animate-snappy">
+      <div class="flex items-center justify-between bg-white px-4 py-3.5 rounded-2xl shadow-sm border border-emerald-200">
+        <button onclick="bukaHalaman('viewHome')" class="text-xs font-extrabold text-emerald-800 hover:text-amber-600 transition">
+          ← Kembali ke Menu
+        </button>
+        <span class="font-extrabold text-sm text-emerald-950">📅 Jadwal Pelajaran</span>
+      </div>
+
+      <div class="bg-white p-4 rounded-2xl shadow-sm border border-amber-200/60 grid grid-cols-2 gap-2.5">
+        <div>
+          <label class="block text-[11px] font-bold text-emerald-900 mb-1">Filter Kelas</label>
+          <select id="filterKelasJadwal" onchange="renderJadwal()"
+            class="w-full border border-emerald-200 rounded-xl px-3 py-2 text-xs font-semibold bg-emerald-50/40 focus:outline-none">
+            <option value="SEMUA">Semua Kelas</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-[11px] font-bold text-emerald-900 mb-1">Filter Hari</label>
+          <select id="filterHariJadwal" onchange="renderJadwal()"
+            class="w-full border border-emerald-200 rounded-xl px-3 py-2 text-xs font-semibold bg-emerald-50/40 focus:outline-none">
+            <option value="SEMUA">Semua Hari</option>
+            <option value="Senin">Senin</option>
+            <option value="Selasa">Selasa</option>
+            <option value="Rabu">Rabu</option>
+            <option value="Kamis">Kamis</option>
+            <option value="Jumat">Jumat</option>
+            <option value="Sabtu">Sabtu</option>
+            <option value="Ahad">Ahad</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="listJadwalContainer" class="space-y-2.5"></div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAMPILAN 3: PORTAL WALI SANTRI             -->
+    <!-- ========================================== -->
+    <section id="viewWali" class="hidden space-y-4 animate-snappy">
+      <div class="flex items-center justify-between bg-white px-4 py-3.5 rounded-2xl shadow-sm border border-emerald-200">
+        <button onclick="bukaHalaman('viewHome')" class="text-xs font-extrabold text-emerald-800 hover:text-amber-600 transition">
+          ← Kembali ke Menu
+        </button>
+        <span class="font-extrabold text-sm text-emerald-950">👨‍👩‍👧‍👦 Portal Wali Santri</span>
+      </div>
+
+      <div id="waliLoginBox" class="mihrab-aura">
+        <div class="bg-white p-6 rounded-[25px] space-y-4">
+          <div class="text-center">
+            <p class="font-arab text-xl text-amber-600">السَّلَامُ عَلَيْكُمْ</p>
+            <h2 class="font-extrabold text-lg text-emerald-950">Masuk Akun Wali Santri</h2>
+            <p class="text-xs text-slate-500 mt-1">Masukkan NIS Santri dan Kode Akses dari Madrasah.</p>
+          </div>
+
+          <div class="space-y-3">
+            <div>
+              <label class="block text-xs font-bold text-emerald-900 mb-1">Nomor Induk Santri (NIS)</label>
+              <input type="text" id="inputNisWali" placeholder="Contoh: 2026001"
+                class="w-full bg-slate-50 border-2 border-slate-200 focus:border-emerald-600 focus:bg-white rounded-xl px-4 py-2.5 text-sm font-semibold focus:outline-none transition" />
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-emerald-900 mb-1">Kode Akses Wali</label>
+              <input type="password" id="inputKodeWali" inputmode="numeric" placeholder="Contoh: 1111"
+                onkeypress="if(event.key === 'Enter') loginWali()"
+                class="w-full bg-slate-50 border-2 border-slate-200 focus:border-emerald-600 focus:bg-white rounded-xl px-4 py-2.5 text-sm font-semibold focus:outline-none transition" />
+            </div>
+            <button onclick="loginWali()" id="btnLoginWali"
+              class="btn-shimmer ripple-btn w-full bg-gradient-to-r from-emerald-800 to-emerald-600 text-white font-extrabold py-3.5 rounded-xl shadow-lg shadow-emerald-800/20 transition active:scale-95">
+              Lihat Data Anak
+            </button>
+            <p id="errorWali" class="hidden text-xs text-red-600 text-center font-semibold"></p>
+          </div>
+        </div>
+      </div>
+
+      <div id="waliDashboard" class="hidden space-y-4 animate-snappy">
+        <div class="islamic-hero text-white p-5 rounded-3xl shadow-lg border-2 border-amber-400/50 relative overflow-hidden">
+          <div class="flex justify-between items-start relative z-10">
+            <div>
+              <span id="waliKelasBadge" class="bg-amber-400 text-emerald-950 text-[10px] font-extrabold px-3 py-0.5 rounded-full shadow-sm">-</span>
+              <h3 id="waliNamaSantri" class="font-extrabold text-lg mt-2">-</h3>
+              <p id="waliNamaOrtu" class="text-xs text-emerald-200">Wali: -</p>
+            </div>
+            <button onclick="logoutWali()" class="text-xs font-bold bg-white/15 hover:bg-white/25 px-3.5 py-1.5 rounded-full border border-white/20">Keluar</button>
+          </div>
+        </div>
+
+        <!-- 3 TAB WALI SANTRI: KEHADIRAN, AJUKAN IZIN, TAGIHAN -->
+        <div class="grid grid-cols-3 bg-white p-1.5 rounded-2xl shadow-sm border border-emerald-100 gap-1">
+          <button id="tabBtnAbsen" onclick="gantiTabWali('absen')"
+            class="py-2.5 px-1 rounded-xl text-[11px] sm:text-xs font-extrabold bg-emerald-700 text-white shadow-sm transition">
+            📸 Kehadiran
+          </button>
+          <button id="tabBtnIzin" onclick="gantiTabWali('izin')"
+            class="py-2.5 px-1 rounded-xl text-[11px] sm:text-xs font-extrabold text-slate-600 hover:bg-slate-50 transition">
+            ✉️ Ajukan Izin
+          </button>
+          <button id="tabBtnTagihan" onclick="gantiTabWali('tagihan')"
+            class="py-2.5 px-1 rounded-xl text-[11px] sm:text-xs font-extrabold text-slate-600 hover:bg-slate-50 transition">
+            💳 Tagihan
+          </button>
+        </div>
+
+        <!-- KONTEN TAB 1: RIWAYAT KEHADIRAN -->
+        <div id="tabKontenAbsen" class="space-y-3 animate-snappy"></div>
+
+        <!-- KONTEN TAB 2: FORM PENGAJUAN IZIN / SAKIT + BUKTI FOTO -->
+        <div id="tabKontenIzin" class="hidden space-y-3 animate-snappy">
+          <div class="bg-white p-5 rounded-3xl mihrab-card space-y-3.5">
+            <div>
+              <h3 class="font-extrabold text-base text-emerald-950">✉️ Formulir Izin / Sakit Santri</h3>
+              <p class="text-xs text-slate-500 mt-0.5">Keterangan beserta bukti foto otomatis tercatat & langsung diarahkan ke WhatsApp Ustadz.</p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[11px] font-bold text-slate-600 mb-1">Tanggal Tidak Hadir</label>
+                <input type="date" id="izinTanggal"
+                  class="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-xs sm:text-sm font-semibold focus:border-emerald-600 focus:outline-none" />
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-slate-600 mb-1">Status Keterangan</label>
+                <select id="izinStatus"
+                  class="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-xs sm:text-sm font-semibold bg-white focus:border-emerald-600 focus:outline-none">
+                  <option value="Izin">✉️ Izin (Urusan Keluarga)</option>
+                  <option value="Sakit">🩺 Sakit</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Ustadz / Pengajar Tujuan</label>
+              <select id="izinUstadzId"
+                class="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-sm bg-white font-semibold focus:border-emerald-600 focus:outline-none">
+                <option value="">-- Pilih Ustadz / Wali Kelas --</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Alasan / Keterangan Singkat</label>
+              <textarea id="izinAlasan" rows="3" placeholder="Contoh: Mohon izin ananda tidak dapat hadir mengaji hari ini karena sedang demam."
+                class="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm focus:border-emerald-600 focus:outline-none"></textarea>
+            </div>
+
+            <!-- UPLOAD / KAMERA BUKTI FOTO IZIN -->
+            <div class="space-y-2">
+              <label class="block text-[11px] font-bold text-slate-600">Lampiran Bukti Foto / Surat Dokter (Opsional)</label>
+              <label for="inputFotoIzin"
+                class="flex flex-col items-center justify-center border-2 border-dashed border-emerald-300 hover:border-amber-500 bg-emerald-50/40 rounded-2xl p-3.5 cursor-pointer transition text-center">
+                <span class="text-xl mb-1">📷</span>
+                <span class="text-xs font-extrabold text-emerald-900">Ambil Foto / Pilih Bukti Gambar</span>
+                <span class="text-[10px] text-slate-500 mt-0.5">Surat dokter, resep obat, atau foto pendukung (otomatis dikompres)</span>
+                <input type="file" id="inputFotoIzin" accept="image/*" onchange="prosesPreviewFotoIzin(event)" class="hidden" />
+              </label>
+
+              <div id="previewFotoIzinBox" class="hidden relative">
+                <img id="previewFotoIzinImg" src="" alt="Preview Bukti Izin" class="w-full max-h-56 object-cover rounded-2xl border border-emerald-200" />
+                <button type="button" onclick="hapusFotoIzin()"
+                  class="absolute top-2 right-2 bg-red-600 text-white text-[11px] font-bold px-2.5 py-1 rounded-full shadow">
+                  ✕ Hapus Bukti
+                </button>
+              </div>
+            </div>
+
+            <label class="flex items-center gap-2.5 bg-emerald-50/80 border border-emerald-200 px-3.5 py-2.5 rounded-xl cursor-pointer select-none">
+              <input type="checkbox" id="cekKirimWaIzin" checked class="w-4 h-4 accent-emerald-700 rounded" />
+              <span class="text-xs font-semibold text-emerald-950">📲 Langsung kirim surat izin ke WhatsApp Ustadz tujuan</span>
+            </label>
+
+            <button onclick="kirimPengajuanIzin()" id="btnKirimIzin"
+              class="btn-shimmer ripple-btn w-full bg-gradient-to-r from-amber-600 to-amber-500 text-white font-extrabold py-3.5 rounded-2xl shadow-lg shadow-amber-600/20 transition active:scale-95">
+              Kirim Pengajuan Izin
+            </button>
+          </div>
+        </div>
+
+        <!-- KONTEN TAB 3: BIAYA & TAGIHAN -->
+        <div id="tabKontenTagihan" class="hidden space-y-3 animate-snappy"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    // ==========================================
+    // 1. PARTIKEL CAHAYA EMAS RINGAN (60 FPS)
+    // ==========================================
+    (function initNoorParticles() {
+      const canvas = document.getElementById('noorCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      let w, h, particles = [];
+
+      const sprite = document.createElement('canvas');
+      sprite.width = sprite.height = 24;
+      const sCtx = sprite.getContext('2d');
+      const grad = sCtx.createRadialGradient(12, 12, 0, 12, 12, 12);
+      grad.addColorStop(0, 'rgba(254, 240, 138, 1)');
+      grad.addColorStop(0.45, 'rgba(251, 191, 36, 0.5)');
+      grad.addColorStop(1, 'rgba(251, 191, 36, 0)');
+      sCtx.fillStyle = grad;
+      sCtx.fillRect(0, 0, 24, 24);
+
+      function resize() {
+        w = canvas.width = canvas.offsetWidth;
+        h = canvas.height = canvas.offsetHeight;
+      }
+      window.addEventListener('resize', resize);
+      resize();
+
+      for (let i = 0; i < 30; i++) {
+        particles.push({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          size: Math.random() * 14 + 8,
+          vy: -(Math.random() * 0.75 + 0.35),
+          phase: Math.random() * Math.PI * 2,
+          alpha: Math.random() * 0.65 + 0.3
+        });
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, w, h);
+        for (let i = 0; i < particles.length; i++) {
+          const p = particles[i];
+          p.y += p.vy;
+          p.phase += 0.035;
+          const xPos = p.x + Math.sin(p.phase) * 14;
+          if (p.y < -20) { p.y = h + 15; p.x = Math.random() * w; }
+
+          ctx.globalAlpha = p.alpha;
+          ctx.drawImage(sprite, xPos - p.size / 2, p.y - p.size / 2, p.size, p.size);
+        }
+        requestAnimationFrame(draw);
+      }
+      draw();
+    })();
+
+    // ==========================================
+    // 2. EFEK 3D TILT SPOTLIGHT & CLICK RIPPLE
+    // ==========================================
+    document.querySelectorAll('.tilt-card').forEach(card => {
+      card.addEventListener('mousemove', e => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const rotateX = ((y / rect.height) - 0.5) * -12;
+        const rotateY = ((x / rect.width) - 0.5) * 12;
+
+        card.style.setProperty('--mouse-x', `${x}px`);
+        card.style.setProperty('--mouse-y', `${y}px`);
+        card.style.transform = `perspective(700px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-4px)`;
+      });
+
+      card.addEventListener('mouseleave', () => {
+        card.style.transform = 'perspective(700px) rotateX(0deg) rotateY(0deg) translateY(0px)';
+      });
+    });
+
+    document.addEventListener('click', e => {
+      const target = e.target.closest('.ripple-btn');
+      if (!target) return;
+      const rect = target.getBoundingClientRect();
+      const size = Math.max(rect.width, rect.height);
+      const ripple = document.createElement('span');
+      ripple.className = 'ripple-span';
+      ripple.style.width = ripple.style.height = `${size}px`;
+      ripple.style.left = `${e.clientX - rect.left - size / 2}px`;
+      ripple.style.top = `${e.clientY - rect.top - size / 2}px`;
+      target.appendChild(ripple);
+      setTimeout(() => ripple.remove(), 450);
+    });
+
+    // ==========================================
+    // 3. KONEKSI SUPABASE & LOGIKA PORTAL
+    // ==========================================
+    const SUPABASE_URL = 'https://fukllqirpdizevgyderw.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_2bHlj80Et_QGIWzEBNyJbg_u0ZWf8xi';
+    const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let madrasahAktif = null;
+    let semuaJadwal = [];
+    let siswaWaliAktif = null;
+    let daftarUstadzMadrasah = [];
+    let fotoIzinDataUrl = null;
+    let fotoIzinBlob = null;
+
+    function getTanggalLokal() {
+      const now = new Date();
+      const offset = now.getTimezoneOffset() * 60000;
+      return new Date(now - offset).toISOString().slice(0, 10);
+    }
+
+    async function initMadrasah() {
+      const params = new URLSearchParams(window.location.search);
+      const kode = params.get('m') || sessionStorage.getItem('kode_madrasah_aktif');
+
+      if (!kode) {
+        document.getElementById('loadingBox').classList.add('hidden');
+        document.getElementById('pilihMadrasahBox').classList.remove('hidden');
+        return;
+      }
+
+      const { data, error } = await db
+        .from('madrasah')
+        .select('*')
+        .eq('kode_madrasah', kode.toLowerCase())
+        .single();
+
+      document.getElementById('loadingBox').classList.add('hidden');
+
+      if (error || !data) {
+        sessionStorage.removeItem('kode_madrasah_aktif');
+        document.getElementById('pilihMadrasahBox').classList.remove('hidden');
+        const errEl = document.getElementById('errorKodeMadrasah');
+        errEl.textContent = `Kode madrasah "${kode}" tidak ditemukan.`;
+        errEl.classList.remove('hidden');
+        return;
+      }
+
+      if (!data.status_aktif) {
+        document.getElementById('headerNamaMadrasah').textContent = data.nama_madrasah;
+        document.getElementById('nonaktifBox').classList.remove('hidden');
+        return;
+      }
+
+      madrasahAktif = data;
+      sessionStorage.setItem('kode_madrasah_aktif', data.kode_madrasah);
+
+      document.title = `${data.nama_madrasah} - Portal Digital`;
+      document.getElementById('headerNamaMadrasah').textContent = data.nama_madrasah;
+      if (data.alamat) document.getElementById('headerAlamatMadrasah').textContent = data.alamat;
+
+      document.getElementById('linkKeUstadz').href = `ustadz.html?m=${data.kode_madrasah}`;
+      document.getElementById('linkKeAdmin').href = `admin.html?m=${data.kode_madrasah}`;
+
+      document.getElementById('viewHome').classList.remove('hidden');
+    }
+
+    function masukKodeManual() {
+      const kode = document.getElementById('inputKodeManual').value.trim().toLowerCase();
+      if (!kode) return;
+      window.location.href = `index.html?m=${encodeURIComponent(kode)}`;
+    }
+
+    function gantiMadrasah() {
+      sessionStorage.removeItem('kode_madrasah_aktif');
+      window.location.href = 'index.html';
+    }
+
+    initMadrasah();
+
+    function bukaHalaman(idSection) {
+      ['viewHome', 'viewJadwal', 'viewWali'].forEach(id => {
+        document.getElementById(id).classList.add('hidden');
+      });
+      const target = document.getElementById(idSection);
+      target.classList.remove('hidden');
+      target.classList.remove('animate-snappy');
+      void target.offsetWidth;
+      target.classList.add('animate-snappy');
+
+      if (idSection === 'viewJadwal') muatSemuaJadwal();
+    }
+
+    async function muatSemuaJadwal() {
+      const container = document.getElementById('listJadwalContainer');
+      container.innerHTML = '<p class="text-center text-xs text-slate-400 py-6">Memuat jadwal pelajaran...</p>';
+
+      const { data, error } = await db
+        .from('jadwal')
+        .select('*, ustadz(nama_ustadz)')
+        .eq('madrasah_id', madrasahAktif.id)
+        .order('id', { ascending: true });
+
+      if (error || !data) {
+        container.innerHTML = '<p class="text-center text-xs text-red-500 py-6">Gagal memuat jadwal.</p>';
+        return;
+      }
+
+      semuaJadwal = data;
+      const selectKelas = document.getElementById('filterKelasJadwal');
+      const kelasUnik = [...new Set(data.map(j => j.kelas))].sort();
+      selectKelas.innerHTML = '<option value="SEMUA">Semua Kelas</option>';
+      kelasUnik.forEach(k => selectKelas.innerHTML += `<option value="${k}">${k}</option>`);
+
+      renderJadwal();
+    }
+
+    function renderJadwal() {
+      const filterKelas = document.getElementById('filterKelasJadwal').value;
+      const filterHari = document.getElementById('filterHariJadwal').value;
+      const container = document.getElementById('listJadwalContainer');
+
+      const hasil = semuaJadwal.filter(item => {
+        const cocokKelas = filterKelas === 'SEMUA' || item.kelas === filterKelas;
+        const cocokHari = filterHari === 'SEMUA' || item.hari === filterHari;
+        return cocokKelas && cocokHari;
+      });
+
+      if (hasil.length === 0) {
+        container.innerHTML = '<div class="bg-white p-6 rounded-2xl text-center text-xs text-slate-400">Belum ada jadwal pelajaran.</div>';
+        return;
+      }
+
+      container.innerHTML = hasil.map((j, i) => `
+        <div style="animation-delay:${i * 0.03}s" class="animate-snappy bg-white p-4 rounded-2xl shadow-sm border-l-4 border-amber-500 flex justify-between items-center hover:shadow-md transition">
+          <div>
+            <div class="flex items-center gap-2 mb-1">
+              <span class="bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-2.5 py-0.5 rounded-md">${j.hari}</span>
+              <span class="text-[11px] font-semibold text-slate-500">${j.jam_pelajaran}</span>
+            </div>
+            <h4 class="font-extrabold text-sm text-emerald-950">${j.mata_pelajaran}</h4>
+            <p class="text-xs text-slate-500 mt-0.5">Pengajar: <strong class="text-slate-700">${j.ustadz ? j.ustadz.nama_ustadz : '-'}</strong></p>
+          </div>
+          <span class="bg-amber-50 text-amber-900 border border-amber-300 text-[11px] font-bold px-3 py-1 rounded-full shrink-0">${j.kelas}</span>
+        </div>
+      `).join('');
+    }
+
+    async function loginWali() {
+      const nis = document.getElementById('inputNisWali').value.trim();
+      const kode = document.getElementById('inputKodeWali').value.trim();
+      const errEl = document.getElementById('errorWali');
+      const btn = document.getElementById('btnLoginWali');
+
+      if (!nis || !kode) {
+        errEl.textContent = 'NIS dan Kode Akses wajib diisi.';
+        errEl.classList.remove('hidden');
+        return;
+      }
+
+      btn.textContent = 'Memeriksa data...';
+      btn.disabled = true;
+      errEl.classList.add('hidden');
+
+      const { data, error } = await db
+        .from('siswa')
+        .select('*')
+        .eq('madrasah_id', madrasahAktif.id)
+        .eq('nis', nis)
+        .eq('kode_akses_wali', kode)
+        .single();
+
+      btn.textContent = 'Lihat Data Anak';
+      btn.disabled = false;
+
+      if (error || !data) {
+        errEl.textContent = 'NIS atau Kode Akses tidak cocok.';
+        errEl.classList.remove('hidden');
+        return;
+      }
+
+      siswaWaliAktif = data;
+      document.getElementById('waliKelasBadge').textContent = data.kelas;
+      document.getElementById('waliNamaSantri').textContent = data.nama_siswa;
+      document.getElementById('waliNamaOrtu').textContent = `Wali: ${data.nama_wali} • NIS: ${data.nis}`;
+      document.getElementById('izinTanggal').value = getTanggalLokal();
+
+      document.getElementById('waliLoginBox').classList.add('hidden');
+      document.getElementById('waliDashboard').classList.remove('hidden');
+
+      muatDropdownUstadzWali();
+      muatRiwayatAbsenWali(data.id);
+      muatTagihanWali(data.id);
+    }
+
+    function logoutWali() {
+      siswaWaliAktif = null;
+      hapusFotoIzin();
+      document.getElementById('waliDashboard').classList.add('hidden');
+      document.getElementById('waliLoginBox').classList.remove('hidden');
+      document.getElementById('inputKodeWali').value = '';
+    }
+
+    function gantiTabWali(tab) {
+      const tabs = {
+        absen: { btn: document.getElementById('tabBtnAbsen'), box: document.getElementById('tabKontenAbsen') },
+        izin: { btn: document.getElementById('tabBtnIzin'), box: document.getElementById('tabKontenIzin') },
+        tagihan: { btn: document.getElementById('tabBtnTagihan'), box: document.getElementById('tabKontenTagihan') }
+      };
+
+      Object.keys(tabs).forEach(key => {
+        if (key === tab) {
+          tabs[key].btn.className = 'py-2.5 px-1 rounded-xl text-[11px] sm:text-xs font-extrabold bg-emerald-700 text-white shadow-sm transition';
+          tabs[key].box.classList.remove('hidden');
+        } else {
+          tabs[key].btn.className = 'py-2.5 px-1 rounded-xl text-[11px] sm:text-xs font-extrabold text-slate-600 hover:bg-slate-50 transition';
+          tabs[key].box.classList.add('hidden');
+        }
+      });
+    }
+
+    async function muatDropdownUstadzWali() {
+      const { data } = await db
+        .from('ustadz')
+        .select('*')
+        .eq('madrasah_id', madrasahAktif.id)
+        .order('id', { ascending: true });
+
+      daftarUstadzMadrasah = data || [];
+      const select = document.getElementById('izinUstadzId');
+      select.innerHTML = '<option value="">-- Pilih Ustadz / Wali Kelas --</option>';
+      daftarUstadzMadrasah.forEach(u => {
+        select.innerHTML += `<option value="${u.id}">${u.nama_ustadz} (${u.kelas_diampu || 'Pengajar'})</option>`;
+      });
+    }
+
+    // ==========================================
+    // KOMPRESI & UPLOAD BUKTI FOTO IZIN
+    // ==========================================
+    function prosesPreviewFotoIzin(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          const maxW = 720;
+          const scale = img.width > maxW ? maxW / img.width : 1;
+          canvas.width = img.width * scale;
+          canvas.height = img.height * scale;
+
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+          fotoIzinDataUrl = canvas.toDataURL('image/jpeg', 0.68);
+          canvas.toBlob(blob => { fotoIzinBlob = blob; }, 'image/jpeg', 0.68);
+
+          document.getElementById('previewFotoIzinImg').src = fotoIzinDataUrl;
+          document.getElementById('previewFotoIzinBox').classList.remove('hidden');
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function hapusFotoIzin() {
+      fotoIzinDataUrl = null;
+      fotoIzinBlob = null;
+      const inputEl = document.getElementById('inputFotoIzin');
+      if (inputEl) inputEl.value = '';
+      const boxEl = document.getElementById('previewFotoIzinBox');
+      if (boxEl) boxEl.classList.add('hidden');
+    }
+
+    async function uploadFotoIzinKeStorage() {
+      if (!fotoIzinBlob) return null;
+      try {
+        const fileName = `${madrasahAktif.kode_madrasah}/izin_${Date.now()}_${Math.floor(Math.random() * 1000)}.jpg`;
+        const { error } = await db.storage.from('absensi').upload(fileName, fotoIzinBlob, {
+          contentType: 'image/jpeg',
+          upsert: true
+        });
+        if (!error) {
+          const { data: pub } = db.storage.from('absensi').getPublicUrl(fileName);
+          if (pub && pub.publicUrl) return pub.publicUrl;
+        }
+      } catch (e) {}
+      return fotoIzinDataUrl;
+    }
+
+    async function kirimPengajuanIzin() {
+      if (!siswaWaliAktif) return;
+      const tanggal = document.getElementById('izinTanggal').value;
+      const status = document.getElementById('izinStatus').value;
+      const ustadzId = document.getElementById('izinUstadzId').value;
+      const alasan = document.getElementById('izinAlasan').value.trim();
+      const kirimWa = document.getElementById('cekKirimWaIzin').checked;
+      const btn = document.getElementById('btnKirimIzin');
+
+      if (!tanggal) return alert('Tanggal izin wajib diisi.');
+      if (!ustadzId) return alert('Silakan pilih Ustadz / Pengajar tujuan terlebih dahulu.');
+      if (!alasan) return alert('Mohon tuliskan alasan izin / sakit secara singkat.');
+
+      btn.textContent = 'Mengirim pengajuan & bukti...';
+      btn.disabled = true;
+
+      const fotoBuktiUrl = await uploadFotoIzinKeStorage();
+      const waktuSekarang = new Date().toTimeString().slice(0, 8);
+
+      const { error } = await db.from('absensi').insert([{
+        madrasah_id: madrasahAktif.id,
+        siswa_id: siswaWaliAktif.id,
+        ustadz_id: parseInt(ustadzId),
+        tanggal: tanggal,
+        waktu_masuk: waktuSekarang,
+        status: status,
+        foto_url: fotoBuktiUrl
+      }]);
+
+      btn.textContent = 'Kirim Pengajuan Izin';
+      btn.disabled = false;
+
+      if (error) return alert('Gagal mengirim pengajuan izin: ' + error.message);
+
+      const ustadzObj = daftarUstadzMadrasah.find(u => u.id === parseInt(ustadzId));
+      const namaUstadz = ustadzObj ? ustadzObj.nama_ustadz : 'Ustadz/Ustadzah';
+      let noWaUstadz = ustadzObj && ustadzObj.no_wa ? String(ustadzObj.no_wa).replace(/[^0-9]/g, '') : '';
+      if (noWaUstadz.startsWith('0')) noWaUstadz = '62' + noWaUstadz.slice(1);
+
+      const adaFoto = Boolean(fotoBuktiUrl);
+
+      document.getElementById('izinAlasan').value = '';
+      hapusFotoIzin();
+      await muatRiwayatAbsenWali(siswaWaliAktif.id);
+      gantiTabWali('absen');
+
+      if (kirimWa) {
+        let infoBuktiWa = '';
+        if (fotoBuktiUrl && fotoBuktiUrl.startsWith('http')) {
+          infoBuktiWa = `\n• *Bukti Foto:* ${fotoBuktiUrl}`;
+        } else if (adaFoto) {
+          infoBuktiWa = `\n• *Lampiran:* Bukti foto telah diunggah di Portal Madrasah`;
+        }
+
+        const pesan = `Assalamu'alaikum Wr. Wb.\n` +
+          `Yth. *${namaUstadz}* (${madrasahAktif.nama_madrasah}),\n\n` +
+          `Saya selaku orang tua/wali santri memohonkan izin ketidakhadiran untuk ananda:\n\n` +
+          `• *Nama Santri:* ${siswaWaliAktif.nama_siswa}\n` +
+          `• *NIS / Kelas:* ${siswaWaliAktif.nis} / ${siswaWaliAktif.kelas}\n` +
+          `• *Tanggal:* ${tanggal}\n` +
+          `• *Keterangan:* *${status.toUpperCase()}*\n` +
+          `• *Alasan:* ${alasan}${infoBuktiWa}\n\n` +
+          `Demikian pemberitahuan ini kami sampaikan. Atas perhatian dan maklumnya kami ucapkan jazakumullahu khairan.\n` +
+          `Hormat kami,\n*${siswaWaliAktif.nama_wali}*`;
+
+        if (!noWaUstadz) {
+          alert(`Pengajuan izin tercatat, namun nomor WhatsApp ${namaUstadz} belum diisi Admin. Silakan pilih kontak tujuan secara manual di WhatsApp.`);
+          window.open(`https://wa.me/?text=${encodeURIComponent(pesan)}`, '_blank');
+        } else {
+          window.open(`https://wa.me/${noWaUstadz}?text=${encodeURIComponent(pesan)}`, '_blank');
+        }
+      } else {
+        alert(`Pengajuan ${status} untuk ${siswaWaliAktif.nama_siswa} tanggal ${tanggal} berhasil dicatat!`);
+      }
+    }
+
+    async function muatRiwayatAbsenWali(siswaId) {
+      const container = document.getElementById('tabKontenAbsen');
+      container.innerHTML = '<p class="text-center text-xs text-slate-400 py-4">Memuat riwayat kehadiran...</p>';
+
+      const { data, error } = await db
+        .from('absensi')
+        .select('*, ustadz(nama_ustadz)')
+        .eq('madrasah_id', madrasahAktif.id)
+        .eq('siswa_id', siswaId)
+        .order('id', { ascending: false });
+
+      if (error || !data || data.length === 0) {
+        container.innerHTML = '<div class="bg-white p-6 rounded-2xl text-center text-xs text-slate-400">Belum ada catatan kehadiran.</div>';
+        return;
+      }
+
+      container.innerHTML = data.map((item, i) => {
+        let badgeStyle = 'bg-emerald-100 text-emerald-800';
+        let ikon = '✓';
+        let labelFoto = 'Bukti Kehadiran';
+        if (item.status === 'Izin') { badgeStyle = 'bg-amber-100 text-amber-800'; ikon = '✉️'; labelFoto = 'Lampiran Bukti Izin'; }
+        if (item.status === 'Sakit') { badgeStyle = 'bg-red-100 text-red-700'; ikon = '🩺'; labelFoto = 'Lampiran Bukti Sakit'; }
+
+        return `
+          <div style="animation-delay:${i * 0.04}s" class="animate-snappy bg-white p-4 rounded-2xl shadow-sm border border-emerald-100 space-y-2.5">
+            <div class="flex justify-between items-center">
+              <div>
+                <p class="font-extrabold text-xs text-emerald-950">📅 ${item.tanggal}</p>
+                <p class="text-[11px] text-slate-500">Pukul ${item.waktu_masuk ? item.waktu_masuk.slice(0,5) : '-'} WIB • ${item.ustadz ? item.ustadz.nama_ustadz : 'Pengurus'}</p>
+              </div>
+              <span class="${badgeStyle} text-[10px] font-extrabold px-2.5 py-1 rounded-full">${ikon} ${item.status}</span>
+            </div>
+            ${item.foto_url ? `
+              <div class="space-y-1">
+                <p class="text-[10px] font-bold text-slate-400">${labelFoto}:</p>
+                <img src="${item.foto_url}" alt="${labelFoto}" class="w-full rounded-xl border border-slate-200 max-h-60 object-cover" />
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function muatTagihanWali(siswaId) {
+      const container = document.getElementById('tabKontenTagihan');
+      container.innerHTML = '<p class="text-center text-xs text-slate-400 py-4">Memuat rincian tagihan...</p>';
+
+      const { data, error } = await db
+        .from('tagihan')
+        .select('*')
+        .eq('madrasah_id', madrasahAktif.id)
+        .eq('siswa_id', siswaId)
+        .order('id', { ascending: false });
+
+      if (error || !data || data.length === 0) {
+        container.innerHTML = '<div class="bg-white p-6 rounded-2xl text-center text-xs text-slate-400">Tidak ada catatan tagihan biaya.</div>';
+        return;
+      }
+
+      container.innerHTML = data.map((t, i) => {
+        const lunas = t.status_bayar === 'Lunas';
+        const nominalRp = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(t.nominal);
+        return `
+          <div style="animation-delay:${i * 0.04}s" class="animate-snappy bg-white p-4 rounded-2xl shadow-sm border-l-4 ${lunas ? 'border-emerald-500' : 'border-amber-500'} flex justify-between items-center">
+            <div>
+              <h4 class="font-extrabold text-sm text-slate-800">${t.judul_tagihan}</h4>
+              <p class="font-bold text-emerald-800 text-sm mt-0.5">${nominalRp}</p>
+              <p class="text-[11px] text-slate-400 mt-0.5">Jatuh tempo: ${t.jatuh_tempo || '-'}</p>
+            </div>
+            <span class="${lunas ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'} text-[11px] font-extrabold px-3 py-1 rounded-full">
+              ${t.status_bayar}
+            </span>
+          </div>
+        `;
+      }).join('');
+    }
+  </script>
+</body>
+</html>

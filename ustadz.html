@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Portal Ustadz - Madrasah Digital</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: linear-gradient(160deg, #faf7f0 0%, #f1ede2 50%, #e4efe9 100%);
+      background-attachment: fixed;
+      overflow-x: hidden;
+    }
+    .font-arab { font-family: 'Amiri', serif; }
+
+    .bg-islamic-lattice {
+      background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23059669' stroke-width='0.6' stroke-opacity='0.09'%3E%3Cpath d='M40 0l11.7 28.3L80 40l-28.3 11.7L40 80l-11.7-28.3L0 40l28.3-11.7z'/%3E%3Ccircle cx='40' cy='40' r='16'/%3E%3C/g%3E%3C/svg%3E");
+    }
+
+    .islamic-hero {
+      background: radial-gradient(circle at 75% 20%, #059669 0%, #064e3b 52%, #022c22 100%);
+      position: relative;
+    }
+    .islamic-hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23fbbf24' stroke-width='0.75' stroke-opacity='0.16'%3E%3Cpath d='M30 0l8.8 21.2L60 30l-21.2 8.8L30 60l-8.8-21.2L0 30l21.2-8.8z'/%3E%3Crect x='15' y='15' width='30' height='30'/%3E%3Crect x='15' y='15' width='30' height='30' transform='rotate(45 30 30)'/%3E%3C/g%3E%3C/svg%3E");
+      pointer-events: none;
+    }
+
+    /* Animasi Cepat & Mulus 60 FPS */
+    @keyframes snappyPopIn {
+      0% { opacity: 0; transform: translate3d(0, 14px, 0) scale(0.97); }
+      100% { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+    }
+    @keyframes spinCW {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    @keyframes spinCCW {
+      from { transform: rotate(360deg); }
+      to { transform: rotate(0deg); }
+    }
+    @keyframes autoShimmer {
+      0%, 65% { transform: translateX(-140%) skewX(-20deg); }
+      100% { transform: translateX(260%) skewX(-20deg); }
+    }
+    @keyframes borderOrbit {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    @keyframes rippleWave {
+      0% { transform: scale(0); opacity: 0.5; }
+      100% { transform: scale(3.5); opacity: 0; }
+    }
+
+    .animate-snappy {
+      will-change: transform, opacity;
+      animation: snappyPopIn 0.32s cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
+    }
+    .mandala-cw { will-change: transform; animation: spinCW 28s linear infinite; }
+    .mandala-ccw { will-change: transform; animation: spinCCW 20s linear infinite; }
+
+    .btn-shimmer { position: relative; overflow: hidden; }
+    .btn-shimmer::after {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; width: 45%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.32), transparent);
+      transform: translateX(-140%) skewX(-20deg);
+      animation: autoShimmer 3.2s ease-in-out infinite;
+    }
+
+    .ripple-span {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(251, 191, 36, 0.45);
+      pointer-events: none;
+      animation: rippleWave 0.45s ease-out forwards;
+    }
+
+    .mihrab-aura {
+      position: relative;
+      border-radius: 1.75rem;
+      padding: 3px;
+      background: linear-gradient(120deg, #059669, #fbbf24, #d97706, #10b981, #fbbf24);
+      background-size: 250% 250%;
+      animation: borderOrbit 4s ease infinite;
+      box-shadow: 0 18px 36px -10px rgba(6, 78, 59, 0.2);
+    }
+
+    .mihrab-card {
+      border-top: 4px solid #d97706;
+      box-shadow: 0 14px 30px -10px rgba(6, 78, 59, 0.12);
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-islamic-lattice text-slate-800 pb-14">
+
+  <!-- HEADER DENGAN JARAK BAWAH LEGA (pb-24) -->
+  <header class="islamic-hero text-white pt-6 pb-24 px-4 rounded-b-[2.8rem] shadow-2xl border-b-4 border-amber-400 overflow-hidden">
+    <canvas id="noorCanvas" class="absolute inset-0 w-full h-full pointer-events-none z-0"></canvas>
+
+    <!-- Mandala Dual Layer -->
+    <svg class="mandala-cw absolute -right-14 -top-14 w-64 h-64 text-amber-300/15 pointer-events-none" viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="0.9">
+      <polygon points="100,10 125,75 190,100 125,125 100,190 75,125 10,100 75,75" />
+      <polygon points="100,10 125,75 190,100 125,125 100,190 75,125 10,100 75,75" transform="rotate(45 100 100)" />
+      <circle cx="100" cy="100" r="65" stroke-dasharray="4 4" />
+    </svg>
+    <svg class="mandala-ccw absolute -right-4 -top-4 w-44 h-44 text-emerald-200/20 pointer-events-none" viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="1">
+      <polygon points="100,20 120,80 180,100 120,120 100,180 80,120 20,100 80,80" />
+      <circle cx="100" cy="100" r="45" />
+    </svg>
+
+    <div class="max-w-xl mx-auto relative z-10">
+      <div class="flex justify-between items-center mb-5 gap-2">
+        <a id="linkKeBeranda" href="index.html" class="text-xs font-bold bg-white/15 hover:bg-white/25 border border-white/25 px-4 py-1.5 rounded-full transition">
+          ← Beranda
+        </a>
+        <span class="hidden sm:inline font-arab text-amber-300 text-xl drop-shadow">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم</span>
+        <button id="btnLogoutUstadz" onclick="location.reload()"
+          class="hidden text-xs font-bold bg-red-500/90 hover:bg-red-600 px-3.5 py-1.5 rounded-full transition">
+          Keluar ↪
+        </button>
+      </div>
+
+      <div class="flex items-center gap-3.5">
+        <div class="w-13 h-13 p-2.5 rounded-2xl bg-gradient-to-br from-amber-300 to-amber-500 text-emerald-950 flex items-center justify-center shadow-lg shadow-amber-500/30 shrink-0">
+          <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+        </div>
+        <div>
+          <span class="text-[10px] font-bold uppercase tracking-widest text-amber-300 block">Portal Pengajar Madrasah</span>
+          <h1 id="headerNamaMadrasah" class="font-extrabold text-xl sm:text-2xl tracking-tight leading-snug">Portal Ustadz</h1>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-xl mx-auto px-4 -mt-12 relative z-20">
+
+    <!-- FORM LOGIN USTADZ -->
+    <section id="loginUstadzSection" class="hidden max-w-md mx-auto mihrab-aura animate-snappy">
+      <div class="bg-white p-7 rounded-[25px] relative overflow-hidden">
+        <div class="flex items-center justify-center gap-2 text-amber-500 text-xs mb-3">
+          <span class="h-px w-10 bg-amber-300"></span>
+          <span>۞</span>
+          <span class="font-arab text-lg text-emerald-800">أَهْلًا وَسَهْلًا</span>
+          <span>۞</span>
+          <span class="h-px w-10 bg-amber-300"></span>
+        </div>
+
+        <div class="text-center mb-6">
+          <div class="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-emerald-50 to-amber-50 border-2 border-amber-300 flex items-center justify-center text-emerald-800 mb-3 shadow-inner">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+            </svg>
+          </div>
+          <h2 class="font-extrabold text-xl text-emerald-950">Masuk Akun Pengajar</h2>
+          <p class="text-xs text-slate-500 mt-1">Masukkan PIN Ustadz/Ustadzah untuk melakukan absensi santri.</p>
+        </div>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-emerald-800 mb-1.5 text-center">PIN Login Ustadz</label>
+            <input type="password" id="inputPinUstadz" inputmode="numeric" placeholder="••••"
+              onkeypress="if(event.key === 'Enter') loginUstadz()"
+              class="w-full bg-amber-50/40 border-2 border-emerald-200 focus:border-amber-500 focus:bg-white rounded-2xl px-4 py-3.5 text-center text-2xl font-extrabold tracking-[0.5em] text-emerald-950 focus:outline-none focus:ring-4 focus:ring-amber-500/15 transition" />
+          </div>
+
+          <button onclick="loginUstadz()" id="btnLoginUstadz"
+            class="btn-shimmer ripple-btn w-full bg-gradient-to-r from-emerald-800 via-emerald-700 to-teal-700 hover:from-emerald-900 hover:to-teal-800 text-white font-extrabold py-3.5 rounded-2xl shadow-lg shadow-emerald-800/25 transition active:scale-95">
+            Masuk Portal Ustadz
+          </button>
+          <p id="errorUstadz" class="hidden bg-red-50 border border-red-200 text-red-700 py-2 px-3 rounded-xl text-xs text-center font-semibold"></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- DASHBOARD USTADZ -->
+    <section id="dashboardUstadz" class="hidden space-y-4 animate-snappy">
+
+      <!-- Kartu Profil Pengajar -->
+      <div class="bg-white p-4 rounded-3xl shadow-md border border-emerald-200 flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <div class="w-11 h-11 rounded-2xl bg-emerald-900 text-amber-300 font-extrabold flex items-center justify-center text-lg shadow">
+            👳‍♂️
+          </div>
+          <div>
+            <p class="text-[10px] font-bold uppercase tracking-wider text-emerald-600">Pengajar Aktif</p>
+            <h2 id="profilNamaUstadz" class="font-extrabold text-base text-emerald-950">-</h2>
+            <p id="profilKelasUstadz" class="text-xs text-slate-500">Amanah: -</p>
+          </div>
+        </div>
+        <span id="badgeTanggalHariIni" class="bg-amber-100 text-amber-900 border border-amber-300 text-[11px] font-bold px-3 py-1 rounded-full shrink-0">
+          -
+        </span>
+      </div>
+
+      <!-- Navigasi 2 Tab Utama -->
+      <div class="grid grid-cols-2 bg-white p-1.5 rounded-2xl shadow-md border border-emerald-100 gap-1.5">
+        <button onclick="bukaTabUstadz('tabAbsen')" id="btnTabAbsen"
+          class="ripple-btn py-2.5 rounded-xl text-xs font-extrabold bg-gradient-to-r from-emerald-800 to-emerald-700 text-white shadow-sm transition">
+          📸 Absensi & Laporan WA
+        </button>
+        <button onclick="bukaTabUstadz('tabJadwal')" id="btnTabJadwal"
+          class="ripple-btn py-2.5 rounded-xl text-xs font-extrabold text-slate-600 hover:bg-emerald-50 transition">
+          📅 Jadwal Mengajar
+        </button>
+      </div>
+
+      <!-- TAB 1: ABSENSI SANTRI & KIRIM WA -->
+      <div id="tabAbsen" class="space-y-4 animate-snappy">
+        <div class="bg-white p-5 rounded-3xl mihrab-card space-y-3.5">
+          <h3 class="font-extrabold text-base text-emerald-950">📸 Catat Kehadiran Santri</h3>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Filter Kelas</label>
+              <select id="filterKelasAbsen" onchange="filterDropdownSantri()"
+                class="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-sm bg-slate-50 font-semibold focus:border-emerald-600 focus:outline-none">
+                <option value="SEMUA">Semua Kelas</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Status Kehadiran</label>
+              <select id="absenStatus"
+                class="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-sm bg-white font-semibold focus:border-emerald-600 focus:outline-none">
+                <option value="Hadir">✓ Hadir</option>
+                <option value="Izin">✉️ Izin</option>
+                <option value="Sakit">🩺 Sakit</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-1">Pilih Santri</label>
+            <select id="absenSiswaId"
+              class="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-sm bg-white font-semibold focus:border-emerald-600 focus:outline-none">
+              <option value="">-- Pilih Santri --</option>
+            </select>
+          </div>
+
+          <!-- Kamera / Unggah Foto Bukti -->
+          <div class="space-y-2">
+            <label class="block text-[11px] font-bold text-slate-600">Foto Bukti Kehadiran (Opsional / Kamera Langsung)</label>
+            <label for="inputFotoAbsen"
+              class="flex flex-col items-center justify-center border-2 border-dashed border-emerald-300 hover:border-amber-500 bg-emerald-50/40 rounded-2xl p-4 cursor-pointer transition text-center">
+              <span class="text-2xl mb-1">📷</span>
+              <span class="text-xs font-extrabold text-emerald-900">Ketuk untuk Ambil Foto / Pilih Gambar</span>
+              <span class="text-[10px] text-slate-500 mt-0.5">Otomatis dikompres ringan agar hemat kuota & cepat terkirim</span>
+              <input type="file" id="inputFotoAbsen" accept="image/*" capture="environment" onchange="prosesPreviewFoto(event)" class="hidden" />
+            </label>
+
+            <div id="previewFotoBox" class="hidden relative">
+              <img id="previewFotoImg" src="" alt="Preview Foto" class="w-full max-h-56 object-cover rounded-2xl border border-emerald-200" />
+              <button type="button" onclick="hapusFotoPreview()"
+                class="absolute top-2 right-2 bg-red-600 text-white text-[11px] font-bold px-2.5 py-1 rounded-full shadow">
+                ✕ Hapus Foto
+              </button>
+            </div>
+          </div>
+
+          <!-- Opsi Otomatis Kirim WA Wali -->
+          <label class="flex items-center gap-2.5 bg-emerald-50/80 border border-emerald-200 px-3.5 py-2.5 rounded-xl cursor-pointer select-none">
+            <input type="checkbox" id="cekLangsungWaAbsen" checked class="w-4 h-4 accent-emerald-700 rounded" />
+            <span class="text-xs font-semibold text-emerald-950">📲 Langsung buka WhatsApp Wali Santri setelah disimpan</span>
+          </label>
+
+          <button onclick="simpanAbsensi()" id="btnSimpanAbsen"
+            class="btn-shimmer ripple-btn w-full bg-gradient-to-r from-emerald-800 via-emerald-700 to-teal-700 text-white font-extrabold py-3.5 rounded-2xl shadow-lg shadow-emerald-800/20 transition active:scale-95">
+            Simpan Absensi & Lapor Wali
+          </button>
+        </div>
+
+        <!-- Daftar Kehadiran Hari Ini -->
+        <div class="bg-white p-5 rounded-3xl shadow-sm border border-emerald-100 space-y-3">
+          <div class="flex justify-between items-center">
+            <h3 class="font-extrabold text-sm text-emerald-950">📋 Santri Tercatat Hari Ini</h3>
+            <span id="countAbsenHariIni" class="text-[11px] font-bold bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full">0 Santri</span>
+          </div>
+          <div id="listAbsenHariIni" class="space-y-2.5"></div>
+        </div>
+      </div>
+
+      <!-- TAB 2: JADWAL MENGAJAR USTADZ -->
+      <div id="tabJadwal" class="hidden space-y-3 animate-snappy">
+        <div class="bg-white p-5 rounded-3xl mihrab-card space-y-3">
+          <h3 class="font-extrabold text-base text-emerald-950">📅 Jadwal Mengajar Anda</h3>
+          <div id="listJadwalUstadz" class="space-y-2.5"></div>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- MODAL PREVIEW FOTO -->
+  <div id="modalFoto" onclick="tutupModalFoto()" class="hidden fixed inset-0 bg-black/75 z-50 flex items-center justify-center p-4">
+    <div onclick="event.stopPropagation()" class="bg-white p-4 rounded-3xl max-w-md w-full space-y-3 shadow-2xl border-t-4 border-amber-500 animate-snappy">
+      <div class="flex justify-between items-center">
+        <p id="modalFotoCaption" class="font-bold text-xs text-emerald-950">Bukti Kehadiran</p>
+        <button onclick="tutupModalFoto()" class="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 font-bold text-xs">✕</button>
+      </div>
+      <img id="modalFotoImg" src="" alt="Bukti Foto" class="w-full rounded-2xl border border-slate-200" />
+    </div>
+  </div>
+
+  <script>
+    // ==========================================
+    // 1. PARTIKEL CAHAYA EMAS RINGAN (60 FPS)
+    // ==========================================
+    (function initNoorParticles() {
+      const canvas = document.getElementById('noorCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      let w, h, particles = [];
+
+      const sprite = document.createElement('canvas');
+      sprite.width = sprite.height = 24;
+      const sCtx = sprite.getContext('2d');
+      const grad = sCtx.createRadialGradient(12, 12, 0, 12, 12, 12);
+      grad.addColorStop(0, 'rgba(254, 240, 138, 1)');
+      grad.addColorStop(0.45, 'rgba(251, 191, 36, 0.5)');
+      grad.addColorStop(1, 'rgba(251, 191, 36, 0)');
+      sCtx.fillStyle = grad;
+      sCtx.fillRect(0, 0, 24, 24);
+
+      function resize() {
+        w = canvas.width = canvas.offsetWidth;
+        h = canvas.height = canvas.offsetHeight;
+      }
+      window.addEventListener('resize', resize);
+      resize();
+
+      for (let i = 0; i < 28; i++) {
+        particles.push({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          size: Math.random() * 14 + 8,
+          vy: -(Math.random() * 0.7 + 0.35),
+          phase: Math.random() * Math.PI * 2,
+          alpha: Math.random() * 0.65 + 0.3
+        });
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, w, h);
+        for (let i = 0; i < particles.length; i++) {
+          const p = particles[i];
+          p.y += p.vy;
+          p.phase += 0.035;
+          const xPos = p.x + Math.sin(p.phase) * 14;
+          if (p.y < -20) { p.y = h + 15; p.x = Math.random() * w; }
+
+          ctx.globalAlpha = p.alpha;
+          ctx.drawImage(sprite, xPos - p.size / 2, p.y - p.size / 2, p.size, p.size);
+        }
+        requestAnimationFrame(draw);
+      }
+      draw();
+    })();
+
+    document.addEventListener('click', e => {
+      const target = e.target.closest('.ripple-btn');
+      if (!target) return;
+      const rect = target.getBoundingClientRect();
+      const size = Math.max(rect.width, rect.height);
+      const ripple = document.createElement('span');
+      ripple.className = 'ripple-span';
+      ripple.style.width = ripple.style.height = `${size}px`;
+      ripple.style.left = `${e.clientX - rect.left - size / 2}px`;
+      ripple.style.top = `${e.clientY - rect.top - size / 2}px`;
+      target.appendChild(ripple);
+      setTimeout(() => ripple.remove(), 450);
+    });
+
+    // ==========================================
+    // 2. KONEKSI SUPABASE & LOGIKA PORTAL USTADZ
+    // ==========================================
+    const SUPABASE_URL = 'https://fukllqirpdizevgyderw.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_2bHlj80Et_QGIWzEBNyJbg_u0ZWf8xi';
+    const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let madrasahAktif = null;
+    let ustadzAktif = null;
+    let daftarSantri = [];
+    let dataAbsenHariIniMap = {};
+    let fotoKompresDataUrl = null;
+    let fotoBlobSiapUpload = null;
+
+    function getTanggalLokal() {
+      const now = new Date();
+      const offset = now.getTimezoneOffset() * 60000;
+      return new Date(now - offset).toISOString().slice(0, 10);
+    }
+
+    function getWaktuLokal() {
+      const now = new Date();
+      return now.toTimeString().slice(0, 8);
+    }
+
+    async function initMadrasah() {
+      const params = new URLSearchParams(window.location.search);
+      const kode = params.get('m') || sessionStorage.getItem('kode_madrasah_aktif');
+      if (!kode) return window.location.href = 'index.html';
+
+      const { data, error } = await db
+        .from('madrasah')
+        .select('*')
+        .eq('kode_madrasah', kode.toLowerCase())
+        .eq('status_aktif', true)
+        .single();
+
+      if (error || !data) return window.location.href = 'index.html';
+
+      madrasahAktif = data;
+      sessionStorage.setItem('kode_madrasah_aktif', data.kode_madrasah);
+      document.getElementById('headerNamaMadrasah').textContent = `Ustadz — ${data.nama_madrasah}`;
+      document.getElementById('linkKeBeranda').href = `index.html?m=${data.kode_madrasah}`;
+      document.getElementById('loginUstadzSection').classList.remove('hidden');
+    }
+    initMadrasah();
+
+    async function loginUstadz() {
+      const pin = document.getElementById('inputPinUstadz').value.trim();
+      const errEl = document.getElementById('errorUstadz');
+      const btn = document.getElementById('btnLoginUstadz');
+
+      if (!pin) {
+        errEl.textContent = 'PIN Ustadz wajib diisi.';
+        errEl.classList.remove('hidden');
+        return;
+      }
+
+      btn.textContent = 'Memeriksa PIN...';
+      btn.disabled = true;
+      errEl.classList.add('hidden');
+
+      const { data, error } = await db
+        .from('ustadz')
+        .select('*')
+        .eq('madrasah_id', madrasahAktif.id)
+        .eq('pin_login', pin)
+        .single();
+
+      btn.textContent = 'Masuk Portal Ustadz';
+      btn.disabled = false;
+
+      if (error || !data) {
+        errEl.textContent = 'PIN Ustadz tidak ditemukan di madrasah ini.';
+        errEl.classList.remove('hidden');
+        return;
+      }
+
+      ustadzAktif = data;
+      document.getElementById('profilNamaUstadz').textContent = data.nama_ustadz;
+      document.getElementById('profilKelasUstadz').textContent = `Amanah: ${data.kelas_diampu || '-'}`;
+      document.getElementById('badgeTanggalHariIni').textContent = new Date().toLocaleDateString('id-ID', {
+        weekday: 'short', day: 'numeric', month: 'short', year: 'numeric'
+      });
+
+      document.getElementById('loginUstadzSection').classList.add('hidden');
+      document.getElementById('dashboardUstadz').classList.remove('hidden');
+      document.getElementById('btnLogoutUstadz').classList.remove('hidden');
+
+      await muatSantriMadrasah();
+      await muatAbsenHariIni();
+      await muatJadwalMengajar();
+    }
+
+    function bukaTabUstadz(tab) {
+      const tabAbsen = document.getElementById('tabAbsen');
+      const tabJadwal = document.getElementById('tabJadwal');
+      const btnAbsen = document.getElementById('btnTabAbsen');
+      const btnJadwal = document.getElementById('btnTabJadwal');
+
+      if (tab === 'tabAbsen') {
+        tabAbsen.classList.remove('hidden');
+        tabJadwal.classList.add('hidden');
+        btnAbsen.className = 'ripple-btn py-2.5 rounded-xl text-xs font-extrabold bg-gradient-to-r from-emerald-800 to-emerald-700 text-white shadow-sm transition';
+        btnJadwal.className = 'ripple-btn py-2.5 rounded-xl text-xs font-extrabold text-slate-600 hover:bg-emerald-50 transition';
+      } else {
+        tabJadwal.classList.remove('hidden');
+        tabAbsen.classList.add('hidden');
+        btnJadwal.className = 'ripple-btn py-2.5 rounded-xl text-xs font-extrabold bg-gradient-to-r from-emerald-800 to-emerald-700 text-white shadow-sm transition';
+        btnAbsen.className = 'ripple-btn py-2.5 rounded-xl text-xs font-extrabold text-slate-600 hover:bg-emerald-50 transition';
+      }
+    }
+
+    async function muatSantriMadrasah() {
+      const { data } = await db
+        .from('siswa')
+        .select('*')
+        .eq('madrasah_id', madrasahAktif.id)
+        .order('nama_siswa', { ascending: true });
+
+      daftarSantri = data || [];
+
+      const selectKelas = document.getElementById('filterKelasAbsen');
+      const kelasUnik = [...new Set(daftarSantri.map(s => s.kelas))].sort();
+      selectKelas.innerHTML = '<option value="SEMUA">Semua Kelas</option>';
+      kelasUnik.forEach(k => selectKelas.innerHTML += `<option value="${k}">${k}</option>`);
+
+      filterDropdownSantri();
+    }
+
+    function filterDropdownSantri() {
+      const kelas = document.getElementById('filterKelasAbsen').value;
+      const selectSantri = document.getElementById('absenSiswaId');
+      const hasil = kelas === 'SEMUA' ? daftarSantri : daftarSantri.filter(s => s.kelas === kelas);
+
+      selectSantri.innerHTML = '<option value="">-- Pilih Santri --</option>';
+      hasil.forEach(s => {
+        selectSantri.innerHTML += `<option value="${s.id}">${s.nama_siswa} (${s.kelas}) — Wali: ${s.nama_wali}</option>`;
+      });
+    }
+
+    function prosesPreviewFoto(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          const maxW = 720;
+          const scale = img.width > maxW ? maxW / img.width : 1;
+          canvas.width = img.width * scale;
+          canvas.height = img.height * scale;
+
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+          fotoKompresDataUrl = canvas.toDataURL('image/jpeg', 0.68);
+          canvas.toBlob(blob => { fotoBlobSiapUpload = blob; }, 'image/jpeg', 0.68);
+
+          document.getElementById('previewFotoImg').src = fotoKompresDataUrl;
+          document.getElementById('previewFotoBox').classList.remove('hidden');
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function hapusFotoPreview() {
+      fotoKompresDataUrl = null;
+      fotoBlobSiapUpload = null;
+      document.getElementById('inputFotoAbsen').value = '';
+      document.getElementById('previewFotoBox').classList.add('hidden');
+    }
+
+    async function uploadFotoKeStorage() {
+      if (!fotoBlobSiapUpload) return null;
+      try {
+        const fileName = `${madrasahAktif.kode_madrasah}/${Date.now()}_${Math.floor(Math.random() * 1000)}.jpg`;
+        const { error } = await db.storage.from('absensi').upload(fileName, fotoBlobSiapUpload, {
+          contentType: 'image/jpeg',
+          upsert: true
+        });
+        if (!error) {
+          const { data: pub } = db.storage.from('absensi').getPublicUrl(fileName);
+          if (pub && pub.publicUrl) return pub.publicUrl;
+        }
+      } catch (e) {}
+      // Fallback otomatis ke Data URL terkompresi jika bucket storage belum dibuat
+      return fotoKompresDataUrl;
+    }
+
+    async function simpanAbsensi() {
+      const siswaId = document.getElementById('absenSiswaId').value;
+      const status = document.getElementById('absenStatus').value;
+      const langsungWa = document.getElementById('cekLangsungWaAbsen').checked;
+      const btn = document.getElementById('btnSimpanAbsen');
+
+      if (!siswaId) return alert('Silakan pilih nama santri terlebih dahulu.');
+
+      btn.textContent = 'Menyimpan absensi...';
+      btn.disabled = true;
+
+      const fotoUrlFinal = await uploadFotoKeStorage();
+      const tanggalHariIni = getTanggalLokal();
+      const waktuSekarang = getWaktuLokal();
+
+      const { data, error } = await db
+        .from('absensi')
+        .insert([{
+          madrasah_id: madrasahAktif.id,
+          siswa_id: parseInt(siswaId),
+          ustadz_id: ustadzAktif.id,
+          tanggal: tanggalHariIni,
+          waktu_masuk: waktuSekarang,
+          status: status,
+          foto_url: fotoUrlFinal
+        }])
+        .select('id')
+        .single();
+
+      btn.textContent = 'Simpan Absensi & Lapor Wali';
+      btn.disabled = false;
+
+      if (error) return alert('Gagal menyimpan absensi: ' + error.message);
+
+      hapusFotoPreview();
+      document.getElementById('absenSiswaId').value = '';
+
+      await muatAbsenHariIni();
+
+      if (langsungWa && data && data.id) {
+        kirimWaAbsensi(data.id);
+      }
+    }
+
+    function kirimWaAbsensi(absenId) {
+      const item = dataAbsenHariIniMap[absenId];
+      if (!item || !item.siswa) return alert('Data santri tidak ditemukan.');
+
+      let noWa = String(item.siswa.no_wa_wali || '').replace(/[^0-9]/g, '');
+      if (!noWa) return alert('Nomor WhatsApp wali santri belum diisi oleh Admin.');
+      if (noWa.startsWith('0')) noWa = '62' + noWa.slice(1);
+
+      const jamTampil = item.waktu_masuk ? item.waktu_masuk.slice(0, 5) : '-';
+      const linkFotoTeks = (item.foto_url && item.foto_url.startsWith('http'))
+        ? `\n• *Bukti Foto:* ${item.foto_url}`
+        : '';
+
+      const pesan = `Assalamu'alaikum Wr. Wb.\n` +
+        `Yth. Bapak/Ibu *${item.siswa.nama_wali}*,\n\n` +
+        `Berikut laporan kehadiran ananda di *${madrasahAktif.nama_madrasah}*:\n\n` +
+        `• *Nama Santri:* ${item.siswa.nama_siswa} (${item.siswa.kelas})\n` +
+        `• *Tanggal:* ${item.tanggal}\n` +
+        `• *Waktu:* ${jamTampil} WIB\n` +
+        `• *Status:* *${item.status.toUpperCase()}* ✅\n` +
+        `• *Pengajar:* ${ustadzAktif.nama_ustadz}${linkFotoTeks}\n\n` +
+        `Semoga Allah SWT senantiasa memberkahi ilmu dan langkah ananda.\n` +
+        `Wassalamu'alaikum Wr. Wb.`;
+
+      window.open(`https://wa.me/${noWa}?text=${encodeURIComponent(pesan)}`, '_blank');
+    }
+
+    async function muatAbsenHariIni() {
+      const tanggalHariIni = getTanggalLokal();
+      const container = document.getElementById('listAbsenHariIni');
+
+      const { data } = await db
+        .from('absensi')
+        .select('*, siswa(nama_siswa, kelas, nama_wali, no_wa_wali)')
+        .eq('madrasah_id', madrasahAktif.id)
+        .eq('tanggal', tanggalHariIni)
+        .order('id', { ascending: false });
+
+      const list = data || [];
+      dataAbsenHariIniMap = {};
+      document.getElementById('countAbsenHariIni').textContent = `${list.length} Santri`;
+
+      if (list.length === 0) {
+        container.innerHTML = '<p class="text-xs text-slate-400 text-center py-4">Belum ada santri yang diabsen hari ini.</p>';
+        return;
+      }
+
+      container.innerHTML = list.map(item => {
+        dataAbsenHariIniMap[item.id] = item;
+        const nama = item.siswa ? item.siswa.nama_siswa : 'Santri';
+        const kelas = item.siswa ? item.siswa.kelas : '-';
+        return `
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-emerald-50/40 p-3.5 rounded-2xl border border-emerald-200/70">
+            <div>
+              <div class="flex items-center gap-2">
+                <p class="font-bold text-sm text-emerald-950">${nama}</p>
+                <span class="bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-2 py-0.5 rounded-full">${item.status}</span>
+              </div>
+              <p class="text-[11px] text-slate-500 mt-0.5">${kelas} • Pukul ${item.waktu_masuk ? item.waktu_masuk.slice(0, 5) : '-'} WIB</p>
+            </div>
+            <div class="flex items-center gap-1.5">
+              ${item.foto_url ? `
+                <button onclick="lihatFoto('${item.foto_url}', '${nama} (${item.tanggal})')"
+                  class="text-xs bg-white border border-emerald-200 hover:bg-emerald-50 text-emerald-800 font-bold px-2.5 py-1.5 rounded-lg">
+                  🖼️ Foto
+                </button>
+              ` : ''}
+              <button onclick="kirimWaAbsensi(${item.id})"
+                class="ripple-btn text-xs bg-[#25D366] hover:bg-[#1ebe5d] text-white font-bold px-3 py-1.5 rounded-lg shadow-sm transition active:scale-95">
+                📲 Kirim WA
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function muatJadwalMengajar() {
+      const container = document.getElementById('listJadwalUstadz');
+      const { data } = await db
+        .from('jadwal')
+        .select('*')
+        .eq('madrasah_id', madrasahAktif.id)
+        .eq('ustadz_id', ustadzAktif.id)
+        .order('id', { ascending: true });
+
+      if (!data || data.length === 0) {
+        container.innerHTML = '<p class="text-xs text-slate-400 text-center py-4">Belum ada jadwal mengajar yang ditetapkan Admin.</p>';
+        return;
+      }
+
+      container.innerHTML = data.map(j => `
+        <div class="bg-emerald-50/40 p-3.5 rounded-2xl border-l-4 border-amber-500 flex justify-between items-center">
+          <div>
+            <div class="flex items-center gap-2 mb-1">
+              <span class="bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-2.5 py-0.5 rounded-md">${j.hari}</span>
+              <span class="text-[11px] font-semibold text-slate-500">${j.jam_pelajaran}</span>
+            </div>
+            <h4 class="font-extrabold text-sm text-emerald-950">${j.mata_pelajaran}</h4>
+          </div>
+          <span class="bg-amber-50 text-amber-900 border border-amber-300 text-[11px] font-bold px-3 py-1 rounded-full">${j.kelas}</span>
+        </div>
+      `).join('');
+    }
+
+    function lihatFoto(url, caption) {
+      document.getElementById('modalFotoImg').src = url;
+      document.getElementById('modalFotoCaption').textContent = caption;
+      document.getElementById('modalFoto').classList.remove('hidden');
+    }
+
+    function tutupModalFoto() {
+      document.getElementById('modalFoto').classList.add('hidden');
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,1210 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Panel Admin & Bendahara - Madrasah Digital</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: linear-gradient(160deg, #faf7f0 0%, #f1ede2 50%, #e4efe9 100%);
+      background-attachment: fixed;
+      overflow-x: hidden;
+    }
+    .font-arab { font-family: 'Amiri', serif; }
+
+    .bg-islamic-lattice {
+      background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23059669' stroke-width='0.6' stroke-opacity='0.09'%3E%3Cpath d='M40 0l11.7 28.3L80 40l-28.3 11.7L40 80l-11.7-28.3L0 40l28.3-11.7z'/%3E%3Ccircle cx='40' cy='40' r='16'/%3E%3C/g%3E%3C/svg%3E");
+    }
+
+    .islamic-hero {
+      background: radial-gradient(circle at 75% 20%, #059669 0%, #064e3b 52%, #022c22 100%);
+      position: relative;
+    }
+    .islamic-hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23fbbf24' stroke-width='0.75' stroke-opacity='0.16'%3E%3Cpath d='M30 0l8.8 21.2L60 30l-21.2 8.8L30 60l-8.8-21.2L0 30l21.2-8.8z'/%3E%3Crect x='15' y='15' width='30' height='30'/%3E%3Crect x='15' y='15' width='30' height='30' transform='rotate(45 30 30)'/%3E%3C/g%3E%3C/svg%3E");
+      pointer-events: none;
+    }
+
+    @keyframes snappyPopIn {
+      0% { opacity: 0; transform: translate3d(0, 14px, 0) scale(0.97); }
+      100% { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+    }
+    @keyframes spinCW {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    @keyframes spinCCW {
+      from { transform: rotate(360deg); }
+      to { transform: rotate(0deg); }
+    }
+    @keyframes autoShimmer {
+      0%, 65% { transform: translateX(-140%) skewX(-20deg); }
+      100% { transform: translateX(260%) skewX(-20deg); }
+    }
+    @keyframes borderOrbit {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    @keyframes rippleWave {
+      0% { transform: scale(0); opacity: 0.5; }
+      100% { transform: scale(3.5); opacity: 0; }
+    }
+
+    .animate-snappy {
+      will-change: transform, opacity;
+      animation: snappyPopIn 0.32s cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
+    }
+    .mandala-cw { will-change: transform; animation: spinCW 28s linear infinite; }
+    .mandala-ccw { will-change: transform; animation: spinCCW 20s linear infinite; }
+
+    .btn-shimmer { position: relative; overflow: hidden; }
+    .btn-shimmer::after {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; width: 45%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.32), transparent);
+      transform: translateX(-140%) skewX(-20deg);
+      animation: autoShimmer 3.2s ease-in-out infinite;
+    }
+
+    .ripple-span {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(251, 191, 36, 0.45);
+      pointer-events: none;
+      animation: rippleWave 0.45s ease-out forwards;
+    }
+
+    .mihrab-aura {
+      position: relative;
+      border-radius: 1.75rem;
+      padding: 3px;
+      background: linear-gradient(120deg, #059669, #fbbf24, #d97706, #10b981, #fbbf24);
+      background-size: 250% 250%;
+      animation: borderOrbit 4s ease infinite;
+      box-shadow: 0 18px 36px -10px rgba(6, 78, 59, 0.2);
+    }
+
+    .mihrab-card {
+      border-top: 4px solid #d97706;
+      box-shadow: 0 14px 30px -10px rgba(6, 78, 59, 0.12);
+    }
+
+    @media print {
+      body { background: #ffffff !important; }
+      header, #navigasiTabAdmin, .no-print, #noorCanvas { display: none !important; }
+      main { margin-top: 0 !important; max-width: 100% !important; padding: 0 !important; }
+      .print-only { display: block !important; }
+      .shadow-sm, .shadow-md, .shadow-xl { box-shadow: none !important; border: 1px solid #cbd5e1 !important; }
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-islamic-lattice text-slate-800 pb-14">
+
+  <!-- HEADER -->
+  <header class="islamic-hero text-white pt-6 pb-24 px-4 rounded-b-[2.8rem] shadow-2xl border-b-4 border-amber-400 overflow-hidden">
+    <canvas id="noorCanvas" class="absolute inset-0 w-full h-full pointer-events-none z-0"></canvas>
+
+    <svg class="mandala-cw absolute -right-14 -top-14 w-64 h-64 text-amber-300/15 pointer-events-none" viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="0.9">
+      <polygon points="100,10 125,75 190,100 125,125 100,190 75,125 10,100 75,75" />
+      <polygon points="100,10 125,75 190,100 125,125 100,190 75,125 10,100 75,75" transform="rotate(45 100 100)" />
+      <circle cx="100" cy="100" r="65" stroke-dasharray="4 4" />
+    </svg>
+    <svg class="mandala-ccw absolute -right-4 -top-4 w-44 h-44 text-emerald-200/20 pointer-events-none" viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="1">
+      <polygon points="100,20 120,80 180,100 120,120 100,180 80,120 20,100 80,80" />
+      <circle cx="100" cy="100" r="45" />
+    </svg>
+
+    <div class="max-w-3xl mx-auto relative z-10">
+      <div class="flex justify-between items-center mb-5 gap-2">
+        <a id="linkKeBeranda" href="index.html" class="text-xs font-bold bg-white/15 hover:bg-white/25 border border-white/25 px-4 py-1.5 rounded-full transition">
+          ← Beranda
+        </a>
+        <span class="hidden sm:inline font-arab text-amber-300 text-xl drop-shadow">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم</span>
+        <div id="aksiHeaderAdmin" class="hidden flex items-center gap-2">
+          <button onclick="bukaModalGantiPin()"
+            class="text-xs font-bold bg-amber-400/25 hover:bg-amber-400/35 border border-amber-300/50 text-amber-200 px-3.5 py-1.5 rounded-full transition">
+            🔑 Ganti PIN
+          </button>
+          <button onclick="location.reload()"
+            class="text-xs font-bold bg-red-500/90 hover:bg-red-600 px-3.5 py-1.5 rounded-full transition">
+            Keluar ↪
+          </button>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3.5">
+        <div class="w-13 h-13 p-2.5 rounded-2xl bg-gradient-to-br from-amber-300 to-amber-500 text-emerald-950 flex items-center justify-center shadow-lg shadow-amber-500/30 shrink-0">
+          <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+          </svg>
+        </div>
+        <div>
+          <span class="text-[10px] font-bold uppercase tracking-widest text-amber-300 block">Sistem Administrasi Madrasah</span>
+          <h1 id="headerNamaMadrasah" class="font-extrabold text-xl sm:text-2xl tracking-tight leading-snug">Panel Admin & Bendahara</h1>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-3xl mx-auto px-4 -mt-12 relative z-20">
+
+    <!-- FORM LOGIN ADMIN -->
+    <section id="loginAdminSection" class="hidden max-w-md mx-auto mihrab-aura animate-snappy">
+      <div class="bg-white p-7 rounded-[25px] relative overflow-hidden">
+        <div class="flex items-center justify-center gap-2 text-amber-500 text-xs mb-3">
+          <span class="h-px w-10 bg-amber-300"></span>
+          <span>۞</span>
+          <span class="font-arab text-lg text-emerald-800">أَهْلًا وَسَهْلًا</span>
+          <span>۞</span>
+          <span class="h-px w-10 bg-amber-300"></span>
+        </div>
+
+        <div class="text-center mb-6">
+          <div class="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-emerald-50 to-amber-50 border-2 border-amber-300 flex items-center justify-center text-emerald-800 mb-3 shadow-inner">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+            </svg>
+          </div>
+          <h2 class="font-extrabold text-xl text-emerald-950">Akses Pengurus Madrasah</h2>
+          <p class="text-xs text-slate-500 mt-1">Masukkan PIN Admin / Bendahara untuk mengelola amanah data madrasah.</p>
+        </div>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-emerald-800 mb-1.5 text-center">PIN Keamanan Pengurus</label>
+            <input type="password" id="inputPinAdmin" inputmode="numeric" placeholder="••••"
+              onkeypress="if(event.key === 'Enter') loginAdmin()"
+              class="w-full bg-amber-50/40 border-2 border-emerald-200 focus:border-amber-500 focus:bg-white rounded-2xl px-4 py-3.5 text-center text-2xl font-extrabold tracking-[0.5em] text-emerald-950 focus:outline-none focus:ring-4 focus:ring-amber-500/15 transition" />
+          </div>
+          
+          <button onclick="loginAdmin()" id="btnLoginAdmin"
+            class="btn-shimmer ripple-btn w-full bg-gradient-to-r from-emerald-800 via-emerald-700 to-teal-700 hover:from-emerald-900 hover:to-teal-800 text-white font-extrabold py-3.5 rounded-2xl shadow-lg shadow-emerald-800/25 transition active:scale-95">
+            Masuk Panel Admin
+          </button>
+          <p id="errorAdmin" class="hidden bg-red-50 border border-red-200 text-red-700 py-2 px-3 rounded-xl text-xs text-center font-semibold"></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- DASHBOARD ADMIN (5 MENU UTAMA) -->
+    <section id="dashboardAdmin" class="hidden space-y-4 animate-snappy">
+
+      <!-- Navigasi Tab -->
+      <div id="navigasiTabAdmin" class="grid grid-cols-3 sm:grid-cols-5 gap-1.5 bg-white p-2 rounded-2xl shadow-lg border border-emerald-100">
+        <button onclick="bukaTab('tabUstadz')" id="btn-tabUstadz"
+          class="tab-btn ripple-btn py-2.5 px-1 rounded-xl text-[11px] sm:text-xs font-extrabold bg-gradient-to-r from-emerald-800 to-emerald-700 text-white shadow-sm transition">
+          👳‍♂️ Ustadz
+        </button>
+        <button onclick="bukaTab('tabSantri')" id="btn-tabSantri"
+          class="tab-btn ripple-btn py-2.5 px-1 rounded-xl text-[11px] sm:text-xs font-extrabold text-slate-600 hover:bg-emerald-50 transition">
+          🎒 Santri
+        </button>
+        <button onclick="bukaTab('tabJadwal')" id="btn-tabJadwal"
+          class="tab-btn ripple-btn py-2.5 px-1 rounded-xl text-[11px] sm:text-xs font-extrabold text-slate-600 hover:bg-emerald-50 transition">
+          📅 Jadwal
+        </button>
+        <button onclick="bukaTab('tabTagihan')" id="btn-tabTagihan"
+          class="tab-btn ripple-btn py-2.5 px-1 rounded-xl text-[11px] sm:text-xs font-extrabold text-slate-600 hover:bg-emerald-50 transition">
+          💳 SPP/Biaya
+        </button>
+        <button onclick="bukaTab('tabRekap')" id="btn-tabRekap"
+          class="tab-btn ripple-btn col-span-2 sm:col-span-1 py-2.5 px-1 rounded-xl text-[11px] sm:text-xs font-extrabold text-slate-600 hover:bg-emerald-50 transition">
+          📊 Rekap Absen
+        </button>
+      </div>
+
+      <!-- TAB 1: KELOLA USTADZ (DENGAN NOMOR WHATSAPP) -->
+      <div id="tabUstadz" class="tab-content space-y-4 animate-snappy">
+        <div class="bg-white p-5 rounded-3xl mihrab-card space-y-3.5">
+          <div>
+            <h3 class="font-extrabold text-base text-emerald-950">+ Tambah Ustadz / Pengajar Baru</h3>
+            <p class="text-xs text-slate-500 mt-0.5">Nomor WhatsApp digunakan agar pengajuan izin dari wali santri langsung masuk ke HP Ustadz.</p>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Nama Ustadz/Ustadzah</label>
+              <input type="text" id="ustadzNama" placeholder="Contoh: Ustadz Hasan"
+                class="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:border-emerald-600 focus:outline-none" />
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Keterangan / Wali Kelas</label>
+              <input type="text" id="ustadzKelas" placeholder="Contoh: Kelas 2 Ula"
+                class="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:border-emerald-600 focus:outline-none" />
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">No. WhatsApp Ustadz</label>
+              <input type="tel" id="ustadzWa" placeholder="Contoh: 081234567890"
+                class="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:border-emerald-600 focus:outline-none" />
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Buat PIN Login (Angka)</label>
+              <input type="text" id="ustadzPin" inputmode="numeric" placeholder="Contoh: 2345"
+                class="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-sm font-bold focus:border-emerald-600 focus:outline-none" />
+            </div>
+          </div>
+          <button onclick="tambahUstadz()"
+            class="btn-shimmer ripple-btn w-full sm:w-auto bg-gradient-to-r from-emerald-800 to-emerald-700 text-white font-bold text-xs px-5 py-3 rounded-xl shadow transition active:scale-95">
+            Simpan Data Ustadz
+          </button>
+        </div>
+
+        <div class="bg-white p-5 rounded-3xl shadow-sm border border-emerald-100 space-y-3">
+          <h3 class="font-extrabold text-sm text-emerald-950">Daftar Ustadz Terdaftar</h3>
+          <div id="listUstadzAdmin" class="space-y-2"></div>
+        </div>
+      </div>
+
+      <!-- TAB 2: KELOLA SANTRI -->
+      <div id="tabSantri" class="tab-content hidden space-y-4 animate-snappy">
+        <div class="bg-white p-5 rounded-3xl mihrab-card space-y-3.5">
+          <h3 class="font-extrabold text-base text-emerald-950">+ Tambah Santri Baru</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Nomor Induk Santri (NIS)</label>
+              <input type="text" id="santriNis" placeholder="Contoh: 2026006"
+                class="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:border-emerald-600 focus:outline-none" />
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Nama Lengkap Santri</label>
+              <input type="text" id="santriNama" placeholder="Contoh: Bilal bin Rabah"
+                class="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:border-emerald-600 focus:outline-none" />
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Kelas</label>
+              <input type="text" id="santriKelas" placeholder="Contoh: Kelas 1 Ula"
+                class="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:border-emerald-600 focus:outline-none" />
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Nama Wali Santri</label>
+              <input type="text" id="santriWali" placeholder="Contoh: Bapak Hendra"
+                class="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:border-emerald-600 focus:outline-none" />
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">No. WhatsApp Wali</label>
+              <input type="tel" id="santriWa" placeholder="Contoh: 081234567890"
+                class="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:border-emerald-600 focus:outline-none" />
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Kode Akses Login Wali</label>
+              <input type="text" id="santriKode" inputmode="numeric" placeholder="Contoh: 6666"
+                class="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-sm font-bold focus:border-emerald-600 focus:outline-none" />
+            </div>
+          </div>
+          <button onclick="tambahSantri()"
+            class="btn-shimmer ripple-btn w-full sm:w-auto bg-gradient-to-r from-emerald-800 to-emerald-700 text-white font-bold text-xs px-5 py-3 rounded-xl shadow transition active:scale-95">
+            Simpan Santri Baru
+          </button>
+        </div>
+
+        <div class="bg-white p-5 rounded-3xl shadow-sm border border-emerald-100 space-y-3">
+          <h3 class="font-extrabold text-sm text-emerald-950">Daftar Santri Madrasah</h3>
+          <div id="listSantriAdmin" class="space-y-2"></div>
+        </div>
+      </div>
+
+      <!-- TAB 3: KELOLA JADWAL PELAJARAN -->
+      <div id="tabJadwal" class="tab-content hidden space-y-4 animate-snappy">
+        <div class="bg-white p-5 rounded-3xl mihrab-card space-y-3.5">
+          <h3 class="font-extrabold text-base text-emerald-950">+ Tambah Jadwal Pelajaran</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Hari</label>
+              <select id="jadwalHari" class="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-sm bg-white">
+                <option value="Senin">Senin</option>
+                <option value="Selasa">Selasa</option>
+                <option value="Rabu">Rabu</option>
+                <option value="Kamis">Kamis</option>
+                <option value="Jumat">Jumat</option>
+                <option value="Sabtu">Sabtu</option>
+                <option value="Ahad">Ahad</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Jam Pelajaran</label>
+              <input type="text" id="jadwalJam" placeholder="Contoh: 15:30 - 16:30 WIB"
+                class="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:border-emerald-600 focus:outline-none" />
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Kelas</label>
+              <input type="text" id="jadwalKelas" placeholder="Contoh: Kelas 1 Ula"
+                class="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:border-emerald-600 focus:outline-none" />
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Mata Pelajaran / Kitab</label>
+              <input type="text" id="jadwalMapel" placeholder="Contoh: Tahfidz Juz 30"
+                class="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:border-emerald-600 focus:outline-none" />
+            </div>
+            <div class="sm:col-span-2">
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Ustadz Pengajar</label>
+              <select id="jadwalUstadzId" class="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-sm bg-white">
+                <option value="">-- Pilih Ustadz --</option>
+              </select>
+            </div>
+          </div>
+          <button onclick="tambahJadwal()"
+            class="btn-shimmer ripple-btn w-full sm:w-auto bg-gradient-to-r from-emerald-800 to-emerald-700 text-white font-bold text-xs px-5 py-3 rounded-xl shadow transition active:scale-95">
+            Simpan Jadwal
+          </button>
+        </div>
+
+        <div class="bg-white p-5 rounded-3xl shadow-sm border border-emerald-100 space-y-3">
+          <h3 class="font-extrabold text-sm text-emerald-950">Daftar Jadwal Aktif</h3>
+          <div id="listJadwalAdmin" class="space-y-2"></div>
+        </div>
+      </div>
+
+      <!-- TAB 4: KELOLA TAGIHAN & KIRIM WA WALI SANTRI -->
+      <div id="tabTagihan" class="tab-content hidden space-y-4 animate-snappy">
+        <div class="bg-white p-5 rounded-3xl mihrab-card space-y-3.5">
+          <h3 class="font-extrabold text-base text-emerald-950">+ Buat Tagihan SPP / Biaya Santri</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="sm:col-span-2">
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Pilih Santri</label>
+              <select id="tagihanSiswaId" class="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-sm bg-white">
+                <option value="">-- Pilih Santri --</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Nama Tagihan</label>
+              <input type="text" id="tagihanJudul" placeholder="Contoh: SPP Desember 2026"
+                class="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:border-emerald-600 focus:outline-none" />
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Nominal (Rp - Angka saja)</label>
+              <input type="number" id="tagihanNominal" placeholder="Contoh: 100000"
+                class="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:border-emerald-600 focus:outline-none" />
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Jatuh Tempo</label>
+              <input type="date" id="tagihanTempo"
+                class="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:border-emerald-600 focus:outline-none" />
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Status Awal</label>
+              <select id="tagihanStatus" class="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-sm bg-white">
+                <option value="Belum Lunas">Belum Lunas</option>
+                <option value="Lunas">Lunas</option>
+              </select>
+            </div>
+          </div>
+
+          <label class="flex items-center gap-2.5 bg-emerald-50/80 border border-emerald-200 px-3.5 py-2.5 rounded-xl cursor-pointer select-none">
+            <input type="checkbox" id="cekLangsungWaTagihan" checked class="w-4 h-4 accent-emerald-700 rounded" />
+            <span class="text-xs font-semibold text-emerald-950">📲 Langsung kirim rincian tagihan ke WhatsApp Wali setelah diterbitkan</span>
+          </label>
+
+          <button onclick="tambahTagihan()" id="btnTerbitkanTagihan"
+            class="btn-shimmer ripple-btn w-full sm:w-auto bg-gradient-to-r from-amber-600 to-amber-500 text-white font-bold text-xs px-5 py-3 rounded-xl shadow transition active:scale-95">
+            Terbitkan Tagihan
+          </button>
+        </div>
+
+        <div class="bg-white p-5 rounded-3xl shadow-sm border border-emerald-100 space-y-3">
+          <div class="flex justify-between items-center">
+            <h3 class="font-extrabold text-sm text-emerald-950">Daftar Tagihan Santri</h3>
+            <span class="text-[11px] text-slate-500">Klik <strong>Kirim WA</strong> untuk japri wali</span>
+          </div>
+          <div id="listTagihanAdmin" class="space-y-2.5"></div>
+        </div>
+      </div>
+
+      <!-- TAB 5: REKAPAN ABSENSI BULANAN -->
+      <div id="tabRekap" class="tab-content hidden space-y-4 animate-snappy">
+
+        <div class="hidden print-only text-center border-b-2 border-slate-800 pb-3 mb-4">
+          <h2 id="judulMadrasahCetak" class="font-extrabold text-lg uppercase">Laporan Rekapitulasi Kehadiran Santri</h2>
+          <p id="judulCetakRekap" class="text-xs text-slate-600">-</p>
+        </div>
+
+        <div class="no-print bg-white p-5 rounded-3xl mihrab-card space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <h3 class="font-extrabold text-base text-emerald-950">📊 Rekapan Absensi Bulanan</h3>
+              <p class="text-xs text-slate-500">Akumulasi kehadiran santri per bulan dan kelas.</p>
+            </div>
+            <div class="flex gap-2">
+              <button onclick="exportRekapCSV()"
+                class="ripple-btn bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-bold px-3.5 py-2 rounded-xl shadow-sm transition active:scale-95">
+                📥 Excel (.CSV)
+              </button>
+              <button onclick="window.print()"
+                class="ripple-btn bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold px-3.5 py-2 rounded-xl shadow-sm transition active:scale-95">
+                🖨️ Cetak
+              </button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Pilih Bulan & Tahun</label>
+              <input type="month" id="rekapBulan" onchange="muatRekapAbsensi()"
+                class="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-sm font-semibold bg-slate-50 focus:border-emerald-600 focus:outline-none" />
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Filter Kelas</label>
+              <select id="rekapKelas" onchange="muatRekapAbsensi()"
+                class="w-full border border-slate-300 rounded-xl px-3 py-2.5 text-sm font-semibold bg-slate-50 focus:border-emerald-600 focus:outline-none">
+                <option value="SEMUA">Semua Kelas</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2.5">
+          <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-emerald-100 text-center">
+            <p class="text-[10px] font-bold uppercase text-slate-400">Total Santri</p>
+            <p id="statTotalSantri" class="font-extrabold text-xl text-emerald-950 mt-0.5">0</p>
+          </div>
+          <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-emerald-100 text-center">
+            <p class="text-[10px] font-bold uppercase text-slate-400">Total Kehadiran</p>
+            <p id="statTotalHadir" class="font-extrabold text-xl text-emerald-700 mt-0.5">0</p>
+          </div>
+          <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-emerald-100 text-center">
+            <p class="text-[10px] font-bold uppercase text-slate-400">Hari Aktif</p>
+            <p id="statHariAktif" class="font-extrabold text-xl text-amber-600 mt-0.5">0</p>
+          </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-3xl shadow-sm border border-emerald-100 space-y-3 overflow-x-auto">
+          <h4 class="font-extrabold text-sm text-emerald-950">Ringkasan Kehadiran Per Santri</h4>
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="border-b-2 border-emerald-100 text-emerald-900 bg-emerald-50/70">
+                <th class="py-2.5 px-3 rounded-tl-xl">No</th>
+                <th class="py-2.5 px-3">NIS</th>
+                <th class="py-2.5 px-3">Nama Santri</th>
+                <th class="py-2.5 px-3">Kelas</th>
+                <th class="py-2.5 px-3 text-center">Total Hadir</th>
+                <th class="py-2.5 px-3 rounded-tr-xl">Rincian Tanggal</th>
+              </tr>
+            </thead>
+            <tbody id="tabelRekapBody" class="divide-y divide-slate-100">
+              <tr><td colspan="6" class="py-6 text-center text-slate-400">Memuat data rekapan...</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="no-print bg-white p-5 rounded-3xl shadow-sm border border-emerald-100 space-y-3">
+          <h4 class="font-extrabold text-sm text-emerald-950">📸 Log Harian & Bukti Foto Bulan Ini</h4>
+          <div id="listLogHarianRekap" class="space-y-2 max-h-96 overflow-y-auto pr-1"></div>
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- MODAL GANTI PIN ADMIN -->
+  <div id="modalGantiPin" onclick="tutupModalGantiPin()" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
+    <div onclick="event.stopPropagation()" class="bg-white p-6 rounded-3xl max-w-sm w-full space-y-4 shadow-2xl border-t-4 border-amber-500 animate-snappy">
+      <div class="flex justify-between items-center">
+        <h3 class="font-extrabold text-base text-emerald-950">🔑 Ubah PIN Admin</h3>
+        <button onclick="tutupModalGantiPin()" class="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 font-bold text-xs">✕</button>
+      </div>
+      <p class="text-xs text-slate-500">Masukkan kombinasi angka PIN baru untuk masuk ke panel admin madrasah ini.</p>
+      <input type="text" id="inputPinBaruAdmin" inputmode="numeric" placeholder="Ketik PIN Baru (Min. 4 angka)"
+        class="w-full border-2 border-slate-200 focus:border-emerald-600 rounded-2xl px-4 py-3 text-center text-lg font-bold tracking-widest focus:outline-none" />
+      <button onclick="simpanPinBaruAdmin()"
+        class="btn-shimmer ripple-btn w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-3 rounded-2xl shadow transition">
+        Simpan PIN Baru
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL PREVIEW FOTO BUKTI KEHADIRAN -->
+  <div id="modalFoto" onclick="tutupModalFoto()" class="hidden fixed inset-0 bg-black/75 z-50 flex items-center justify-center p-4">
+    <div onclick="event.stopPropagation()" class="bg-white p-4 rounded-3xl max-w-md w-full space-y-3 shadow-2xl border-t-4 border-amber-500 animate-snappy">
+      <div class="flex justify-between items-center">
+        <p id="modalFotoCaption" class="font-bold text-xs text-emerald-950">Bukti Kehadiran</p>
+        <button onclick="tutupModalFoto()" class="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 font-bold text-xs">✕</button>
+      </div>
+      <img id="modalFotoImg" src="" alt="Bukti Foto" class="w-full rounded-2xl border border-slate-200" />
+    </div>
+  </div>
+
+  <script>
+    // ==========================================
+    // 1. PARTIKEL CAHAYA EMAS RINGAN (60 FPS)
+    // ==========================================
+    (function initNoorParticles() {
+      const canvas = document.getElementById('noorCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      let w, h, particles = [];
+
+      const sprite = document.createElement('canvas');
+      sprite.width = sprite.height = 24;
+      const sCtx = sprite.getContext('2d');
+      const grad = sCtx.createRadialGradient(12, 12, 0, 12, 12, 12);
+      grad.addColorStop(0, 'rgba(254, 240, 138, 1)');
+      grad.addColorStop(0.45, 'rgba(251, 191, 36, 0.5)');
+      grad.addColorStop(1, 'rgba(251, 191, 36, 0)');
+      sCtx.fillStyle = grad;
+      sCtx.fillRect(0, 0, 24, 24);
+
+      function resize() {
+        w = canvas.width = canvas.offsetWidth;
+        h = canvas.height = canvas.offsetHeight;
+      }
+      window.addEventListener('resize', resize);
+      resize();
+
+      for (let i = 0; i < 28; i++) {
+        particles.push({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          size: Math.random() * 14 + 8,
+          vy: -(Math.random() * 0.7 + 0.35),
+          phase: Math.random() * Math.PI * 2,
+          alpha: Math.random() * 0.65 + 0.3
+        });
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, w, h);
+        for (let i = 0; i < particles.length; i++) {
+          const p = particles[i];
+          p.y += p.vy;
+          p.phase += 0.035;
+          const xPos = p.x + Math.sin(p.phase) * 14;
+          if (p.y < -20) { p.y = h + 15; p.x = Math.random() * w; }
+
+          ctx.globalAlpha = p.alpha;
+          ctx.drawImage(sprite, xPos - p.size / 2, p.y - p.size / 2, p.size, p.size);
+        }
+        requestAnimationFrame(draw);
+      }
+      draw();
+    })();
+
+    document.addEventListener('click', e => {
+      const target = e.target.closest('.ripple-btn');
+      if (!target) return;
+      const rect = target.getBoundingClientRect();
+      const size = Math.max(rect.width, rect.height);
+      const ripple = document.createElement('span');
+      ripple.className = 'ripple-span';
+      ripple.style.width = ripple.style.height = `${size}px`;
+      ripple.style.left = `${e.clientX - rect.left - size / 2}px`;
+      ripple.style.top = `${e.clientY - rect.top - size / 2}px`;
+      target.appendChild(ripple);
+      setTimeout(() => ripple.remove(), 450);
+    });
+
+    // ==========================================
+    // 2. KONEKSI SUPABASE & LOGIKA ADMIN
+    // ==========================================
+    const SUPABASE_URL = 'https://fukllqirpdizevgyderw.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_2bHlj80Et_QGIWzEBNyJbg_u0ZWf8xi';
+    const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let madrasahAktif = null;
+    let adminAktif = null;
+    let dataUstadzList = [];
+    let dataSantriList = [];
+    let dataTagihanMap = {};
+    let hasilRekapExport = [];
+
+    const bulanSekarang = new Date().toISOString().slice(0, 7);
+    document.getElementById('rekapBulan').value = bulanSekarang;
+
+    async function initMadrasah() {
+      const params = new URLSearchParams(window.location.search);
+      const kode = params.get('m') || sessionStorage.getItem('kode_madrasah_aktif');
+      if (!kode) return window.location.href = 'index.html';
+
+      const { data, error } = await db
+        .from('madrasah')
+        .select('*')
+        .eq('kode_madrasah', kode.toLowerCase())
+        .eq('status_aktif', true)
+        .single();
+
+      if (error || !data) return window.location.href = 'index.html';
+
+      madrasahAktif = data;
+      sessionStorage.setItem('kode_madrasah_aktif', data.kode_madrasah);
+      document.getElementById('headerNamaMadrasah').textContent = `Admin — ${data.nama_madrasah}`;
+      document.getElementById('linkKeBeranda').href = `index.html?m=${data.kode_madrasah}`;
+      document.getElementById('loginAdminSection').classList.remove('hidden');
+    }
+    initMadrasah();
+
+    async function loginAdmin() {
+      const pin = document.getElementById('inputPinAdmin').value.trim();
+      const errEl = document.getElementById('errorAdmin');
+      const btn = document.getElementById('btnLoginAdmin');
+
+      if (!pin) {
+        errEl.textContent = 'PIN Admin wajib diisi.';
+        errEl.classList.remove('hidden');
+        return;
+      }
+
+      btn.textContent = 'Memeriksa PIN...';
+      btn.disabled = true;
+      errEl.classList.add('hidden');
+
+      const { data, error } = await db
+        .from('admin')
+        .select('*')
+        .eq('madrasah_id', madrasahAktif.id)
+        .eq('pin_admin', pin)
+        .single();
+
+      btn.textContent = 'Masuk Panel Admin';
+      btn.disabled = false;
+
+      if (error || !data) {
+        errEl.textContent = 'PIN Admin salah untuk madrasah ini!';
+        errEl.classList.remove('hidden');
+        return;
+      }
+
+      adminAktif = data;
+      document.getElementById('loginAdminSection').classList.add('hidden');
+      document.getElementById('dashboardAdmin').classList.remove('hidden');
+      document.getElementById('aksiHeaderAdmin').classList.remove('hidden');
+
+      muatSemuaData();
+    }
+
+    function bukaModalGantiPin() {
+      document.getElementById('inputPinBaruAdmin').value = '';
+      document.getElementById('modalGantiPin').classList.remove('hidden');
+    }
+
+    function tutupModalGantiPin() {
+      document.getElementById('modalGantiPin').classList.add('hidden');
+    }
+
+    async function simpanPinBaruAdmin() {
+      const pinBaru = document.getElementById('inputPinBaruAdmin').value.trim();
+      if (pinBaru.length < 4) return alert('PIN baru minimal terdiri dari 4 angka.');
+
+      const { error } = await db
+        .from('admin')
+        .update({ pin_admin: pinBaru })
+        .eq('id', adminAktif.id);
+
+      if (error) return alert('Gagal mengubah PIN: ' + error.message);
+
+      adminAktif.pin_admin = pinBaru;
+      tutupModalGantiPin();
+      alert(`PIN Admin berhasil diperbarui menjadi: ${pinBaru}\nHarap catat dan simpan PIN baru Anda.`);
+    }
+
+    function bukaTab(idTab) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        const extraCol = btn.id === 'btn-tabRekap' ? 'col-span-2 sm:col-span-1 ' : '';
+        btn.className = `tab-btn ripple-btn ${extraCol}py-2.5 px-1 rounded-xl text-[11px] sm:text-xs font-extrabold text-slate-600 hover:bg-emerald-50 transition`;
+      });
+
+      const tabEl = document.getElementById(idTab);
+      tabEl.classList.remove('hidden');
+      tabEl.classList.remove('animate-snappy');
+      void tabEl.offsetWidth;
+      tabEl.classList.add('animate-snappy');
+
+      const activeBtn = document.getElementById('btn-' + idTab);
+      const extraColActive = idTab === 'tabRekap' ? 'col-span-2 sm:col-span-1 ' : '';
+      activeBtn.className = `tab-btn ripple-btn ${extraColActive}py-2.5 px-1 rounded-xl text-[11px] sm:text-xs font-extrabold bg-gradient-to-r from-emerald-800 to-emerald-700 text-white shadow-sm transition`;
+
+      if (idTab === 'tabRekap') muatRekapAbsensi();
+    }
+
+    async function muatSemuaData() {
+      await muatUstadz();
+      await muatSantri();
+      await muatJadwal();
+      await muatTagihan();
+      await muatRekapAbsensi();
+    }
+
+    async function muatUstadz() {
+      const { data } = await db.from('ustadz').select('*').eq('madrasah_id', madrasahAktif.id).order('id', { ascending: true });
+      dataUstadzList = data || [];
+
+      const container = document.getElementById('listUstadzAdmin');
+      const selectJadwal = document.getElementById('jadwalUstadzId');
+
+      selectJadwal.innerHTML = '<option value="">-- Pilih Ustadz Pengajar --</option>';
+      dataUstadzList.forEach(u => selectJadwal.innerHTML += `<option value="${u.id}">${u.nama_ustadz}</option>`);
+
+      if (dataUstadzList.length === 0) {
+        container.innerHTML = '<p class="text-xs text-slate-400">Belum ada data ustadz.</p>';
+        return;
+      }
+
+      container.innerHTML = dataUstadzList.map(u => `
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 bg-emerald-50/40 p-3.5 rounded-xl border border-emerald-200/70">
+          <div>
+            <p class="font-bold text-sm text-emerald-950">${u.nama_ustadz}</p>
+            <p class="text-xs text-slate-500">
+              Keterangan: ${u.kelas_diampu} • 
+              <span class="font-bold text-emerald-700">PIN: ${u.pin_login}</span> • 
+              <span class="font-semibold ${u.no_wa ? 'text-teal-700' : 'text-amber-600'}">WA: ${u.no_wa || 'Belum diisi'}</span>
+            </p>
+          </div>
+          <div class="flex items-center gap-1.5 shrink-0">
+            <button onclick="editWaUstadz(${u.id}, '${u.nama_ustadz.replace(/'/g, "\\'")}', '${u.no_wa || ''}')"
+              class="text-xs bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold px-3 py-1.5 rounded-lg transition">
+              ✏️ Edit WA
+            </button>
+            <button onclick="hapusData('ustadz', ${u.id})"
+              class="text-xs bg-red-100 hover:bg-red-200 text-red-700 font-bold px-3 py-1.5 rounded-lg transition">
+              Hapus
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function tambahUstadz() {
+      const nama = document.getElementById('ustadzNama').value.trim();
+      const kelas = document.getElementById('ustadzKelas').value.trim() || '-';
+      let wa = document.getElementById('ustadzWa').value.trim().replace(/[^0-9]/g, '');
+      const pin = document.getElementById('ustadzPin').value.trim();
+
+      if (!nama || !wa || !pin) return alert('Nama Ustadz, Nomor WhatsApp, dan PIN wajib diisi!');
+      if (wa.startsWith('0')) wa = '62' + wa.slice(1);
+
+      if (dataUstadzList.some(u => u.pin_login === pin)) {
+        return alert('PIN tersebut sudah dipakai ustadz lain di madrasah ini.');
+      }
+
+      const { error } = await db.from('ustadz').insert([{
+        madrasah_id: madrasahAktif.id,
+        nama_ustadz: nama,
+        kelas_diampu: kelas,
+        no_wa: wa,
+        pin_login: pin
+      }]);
+      if (error) return alert('Gagal menyimpan (pastikan kolom no_wa sudah dibuat di Supabase): ' + error.message);
+
+      document.getElementById('ustadzNama').value = '';
+      document.getElementById('ustadzKelas').value = '';
+      document.getElementById('ustadzWa').value = '';
+      document.getElementById('ustadzPin').value = '';
+      muatUstadz();
+    }
+
+    async function editWaUstadz(id, nama, waLama) {
+      const input = prompt(`Masukkan Nomor WhatsApp untuk ${nama} (contoh: 081234567890):`, waLama);
+      if (input === null) return;
+
+      let waBaru = input.trim().replace(/[^0-9]/g, '');
+      if (!waBaru) return alert('Nomor WhatsApp tidak boleh kosong.');
+      if (waBaru.startsWith('0')) waBaru = '62' + waBaru.slice(1);
+
+      const { error } = await db
+        .from('ustadz')
+        .update({ no_wa: waBaru })
+        .eq('id', id)
+        .eq('madrasah_id', madrasahAktif.id);
+
+      if (error) return alert('Gagal memperbarui nomor WA: ' + error.message);
+      muatUstadz();
+    }
+
+    async function muatSantri() {
+      const { data } = await db.from('siswa').select('*').eq('madrasah_id', madrasahAktif.id).order('kelas', { ascending: true });
+      dataSantriList = data || [];
+
+      const container = document.getElementById('listSantriAdmin');
+      const selectTagihan = document.getElementById('tagihanSiswaId');
+      const selectRekapKelas = document.getElementById('rekapKelas');
+
+      selectTagihan.innerHTML = '<option value="">-- Pilih Santri --</option>';
+      dataSantriList.forEach(s => selectTagihan.innerHTML += `<option value="${s.id}">${s.nama_siswa} (${s.kelas} - Wali: ${s.nama_wali})</option>`);
+
+      const kelasUnik = [...new Set(dataSantriList.map(s => s.kelas))].sort();
+      const kelasSebelumnya = selectRekapKelas.value;
+      selectRekapKelas.innerHTML = '<option value="SEMUA">Semua Kelas</option>';
+      kelasUnik.forEach(k => selectRekapKelas.innerHTML += `<option value="${k}">${k}</option>`);
+      if (kelasSebelumnya) selectRekapKelas.value = kelasSebelumnya;
+
+      if (dataSantriList.length === 0) {
+        container.innerHTML = '<p class="text-xs text-slate-400">Belum ada data santri.</p>';
+        return;
+      }
+
+      container.innerHTML = dataSantriList.map(s => `
+        <div class="flex justify-between items-center bg-emerald-50/40 p-3 rounded-xl border border-emerald-200/70">
+          <div>
+            <p class="font-bold text-sm text-emerald-950">${s.nama_siswa} <span class="text-xs font-normal text-slate-500">(${s.kelas})</span></p>
+            <p class="text-[11px] text-slate-500">NIS: <strong>${s.nis}</strong> • Kode Wali: <strong>${s.kode_akses_wali}</strong> • WA: ${s.no_wa_wali}</p>
+          </div>
+          <button onclick="hapusData('siswa', ${s.id})" class="text-xs bg-red-100 hover:bg-red-200 text-red-700 font-bold px-3 py-1.5 rounded-lg shrink-0">
+            Hapus
+          </button>
+        </div>
+      `).join('');
+    }
+
+    async function tambahSantri() {
+      const nis = document.getElementById('santriNis').value.trim();
+      const nama = document.getElementById('santriNama').value.trim();
+      const kelas = document.getElementById('santriKelas').value.trim();
+      const wali = document.getElementById('santriWali').value.trim();
+      let wa = document.getElementById('santriWa').value.trim().replace(/[^0-9]/g, '');
+      const kode = document.getElementById('santriKode').value.trim();
+
+      if (!nis || !nama || !kelas || !wali || !wa || !kode) return alert('Semua kolom data santri wajib diisi!');
+      if (wa.startsWith('0')) wa = '62' + wa.slice(1);
+
+      const { error } = await db.from('siswa').insert([{
+        madrasah_id: madrasahAktif.id, nis, nama_siswa: nama, kelas, nama_wali: wali, no_wa_wali: wa, kode_akses_wali: kode
+      }]);
+      if (error) return alert('Gagal menyimpan (pastikan NIS belum terdaftar): ' + error.message);
+
+      ['santriNis', 'santriNama', 'santriKelas', 'santriWali', 'santriWa', 'santriKode'].forEach(id => document.getElementById(id).value = '');
+      muatSantri();
+    }
+
+    async function muatJadwal() {
+      const { data } = await db.from('jadwal').select('*, ustadz(nama_ustadz)').eq('madrasah_id', madrasahAktif.id).order('id', { ascending: false });
+      const container = document.getElementById('listJadwalAdmin');
+
+      if (!data || data.length === 0) {
+        container.innerHTML = '<p class="text-xs text-slate-400">Belum ada jadwal pelajaran.</p>';
+        return;
+      }
+
+      container.innerHTML = data.map(j => `
+        <div class="flex justify-between items-center bg-emerald-50/40 p-3 rounded-xl border border-emerald-200/70">
+          <div>
+            <p class="font-bold text-sm text-emerald-950">${j.hari} (${j.jam_pelajaran}) — ${j.kelas}</p>
+            <p class="text-xs text-slate-600">${j.mata_pelajaran} • Pengajar: <strong>${j.ustadz ? j.ustadz.nama_ustadz : '-'}</strong></p>
+          </div>
+          <button onclick="hapusData('jadwal', ${j.id})" class="text-xs bg-red-100 hover:bg-red-200 text-red-700 font-bold px-3 py-1.5 rounded-lg shrink-0">
+            Hapus
+          </button>
+        </div>
+      `).join('');
+    }
+
+    async function tambahJadwal() {
+      const hari = document.getElementById('jadwalHari').value;
+      const jam = document.getElementById('jadwalJam').value.trim();
+      const kelas = document.getElementById('jadwalKelas').value.trim();
+      const mapel = document.getElementById('jadwalMapel').value.trim();
+      const ustadzId = document.getElementById('jadwalUstadzId').value;
+
+      if (!jam || !kelas || !mapel || !ustadzId) return alert('Lengkapi jam, kelas, mata pelajaran, dan ustadz pengajar!');
+
+      const { error } = await db.from('jadwal').insert([{
+        madrasah_id: madrasahAktif.id, hari, jam_pelajaran: jam, kelas, mata_pelajaran: mapel, ustadz_id: parseInt(ustadzId)
+      }]);
+      if (error) return alert('Gagal menyimpan jadwal: ' + error.message);
+
+      document.getElementById('jadwalJam').value = '';
+      document.getElementById('jadwalKelas').value = '';
+      document.getElementById('jadwalMapel').value = '';
+      muatJadwal();
+    }
+
+    async function muatTagihan() {
+      const { data } = await db
+        .from('tagihan')
+        .select('*, siswa(nis, nama_siswa, kelas, nama_wali, no_wa_wali)')
+        .eq('madrasah_id', madrasahAktif.id)
+        .order('id', { ascending: false });
+
+      const container = document.getElementById('listTagihanAdmin');
+      dataTagihanMap = {};
+
+      if (!data || data.length === 0) {
+        container.innerHTML = '<p class="text-xs text-slate-400">Belum ada data tagihan.</p>';
+        return;
+      }
+
+      container.innerHTML = data.map(t => {
+        dataTagihanMap[t.id] = t;
+        const lunas = t.status_bayar === 'Lunas';
+        const rp = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(t.nominal);
+        const namaSiswa = t.siswa ? t.siswa.nama_siswa : 'Santri';
+        const kelasSiswa = t.siswa ? t.siswa.kelas : '-';
+        const namaWali = t.siswa ? t.siswa.nama_wali : '-';
+
+        return `
+          <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 bg-emerald-50/40 p-3.5 rounded-2xl border border-emerald-200/70">
+            <div class="space-y-0.5">
+              <div class="flex items-center gap-2">
+                <p class="font-bold text-sm text-emerald-950">${namaSiswa}</p>
+                <span class="text-[11px] bg-white border border-slate-200 text-slate-600 px-2 py-0.5 rounded-md font-semibold">${kelasSiswa}</span>
+              </div>
+              <p class="text-xs text-slate-700">${t.judul_tagihan} • <strong class="text-emerald-800">${rp}</strong></p>
+              <p class="text-[11px] text-slate-500">Wali: ${namaWali} ${t.jatuh_tempo ? `• Tempo: ${t.jatuh_tempo}` : ''}</p>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-1.5">
+              <button onclick="kirimWaTagihan(${t.id})"
+                class="ripple-btn text-xs bg-[#25D366] hover:bg-[#1ebe5d] text-white font-bold px-3 py-1.5 rounded-lg shadow-sm flex items-center gap-1 transition active:scale-95">
+                📲 ${lunas ? 'Kirim Kuitansi' : 'Kirim WA'}
+              </button>
+
+              ${!lunas ? `
+                <button onclick="tandaiLunas(${t.id})" class="text-xs bg-emerald-700 hover:bg-emerald-800 text-white font-bold px-3 py-1.5 rounded-lg transition">
+                  ✓ Lunas
+                </button>
+              ` : `<span class="text-xs bg-emerald-100 text-emerald-800 font-bold px-2.5 py-1.5 rounded-lg">Lunas ✅</span>`}
+
+              <button onclick="hapusData('tagihan', ${t.id})" class="text-xs bg-red-100 hover:bg-red-200 text-red-700 font-bold px-2.5 py-1.5 rounded-lg transition">
+                Hapus
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function kirimWaTagihan(tagihanId) {
+      const t = dataTagihanMap[tagihanId];
+      if (!t || !t.siswa) return alert('Data santri/wali tidak ditemukan.');
+
+      let noWa = String(t.siswa.no_wa_wali || '').replace(/[^0-9]/g, '');
+      if (!noWa) return alert('Nomor WhatsApp wali santri belum diisi.');
+      if (noWa.startsWith('0')) noWa = '62' + noWa.slice(1);
+
+      const rp = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(t.nominal);
+      const lunas = t.status_bayar === 'Lunas';
+
+      let pesan = '';
+      if (!lunas) {
+        pesan = `Assalamu'alaikum Wr. Wb.\n` +
+          `Yth. Bapak/Ibu *${t.siswa.nama_wali}*,\n\n` +
+          `Berikut kami sampaikan rincian administrasi/tagihan santri dari *${madrasahAktif.nama_madrasah}*:\n\n` +
+          `• *Nama Santri:* ${t.siswa.nama_siswa} (${t.siswa.kelas})\n` +
+          `• *NIS:* ${t.siswa.nis || '-'}\n` +
+          `• *Tagihan:* ${t.judul_tagihan}\n` +
+          `• *Nominal:* ${rp}\n` +
+          `• *Jatuh Tempo:* ${t.jatuh_tempo || '-'}\n` +
+          `• *Status:* *BELUM LUNAS*\n\n` +
+          `Rincian status pembayaran juga dapat dipantau melalui Portal Wali Santri.\n` +
+          `Jazakumullahu khairan katsiran.\n` +
+          `Wassalamu'alaikum Wr. Wb.`;
+      } else {
+        pesan = `Assalamu'alaikum Wr. Wb.\n` +
+          `Yth. Bapak/Ibu *${t.siswa.nama_wali}*,\n\n` +
+          `*BUKTI PEMBAYARAN LUNAS (KUITANSI DIGITAL)*\n` +
+          `*${madrasahAktif.nama_madrasah}*\n\n` +
+          `• *Nama Santri:* ${t.siswa.nama_siswa} (${t.siswa.kelas})\n` +
+          `• *Keterangan:* ${t.judul_tagihan}\n` +
+          `• *Nominal:* ${rp}\n` +
+          `• *Status:* *LUNAS* ✅\n\n` +
+          `Terima kasih atas kepercayaan dan kerja samanya. Semoga menjadi amal jariyah dan ilmu yang bermanfaat bagi ananda.\n` +
+          `Wassalamu'alaikum Wr. Wb.`;
+      }
+
+      const urlWa = `https://wa.me/${noWa}?text=${encodeURIComponent(pesan)}`;
+      window.open(urlWa, '_blank');
+    }
+
+    async function tambahTagihan() {
+      const siswaId = document.getElementById('tagihanSiswaId').value;
+      const judul = document.getElementById('tagihanJudul').value.trim();
+      const nominal = document.getElementById('tagihanNominal').value;
+      const tempo = document.getElementById('tagihanTempo').value || null;
+      const status = document.getElementById('tagihanStatus').value;
+      const langsungWa = document.getElementById('cekLangsungWaTagihan').checked;
+      const btn = document.getElementById('btnTerbitkanTagihan');
+
+      if (!siswaId || !judul || !nominal) return alert('Santri, nama tagihan, dan nominal wajib diisi!');
+
+      btn.textContent = 'Menerbitkan...';
+      btn.disabled = true;
+
+      const { data, error } = await db
+        .from('tagihan')
+        .insert([{
+          madrasah_id: madrasahAktif.id,
+          siswa_id: parseInt(siswaId),
+          judul_tagihan: judul,
+          nominal: parseInt(nominal),
+          jatuh_tempo: tempo,
+          status_bayar: status
+        }])
+        .select('id')
+        .single();
+
+      btn.textContent = 'Terbitkan Tagihan';
+      btn.disabled = false;
+
+      if (error) return alert('Gagal menerbitkan tagihan: ' + error.message);
+
+      document.getElementById('tagihanJudul').value = '';
+      document.getElementById('tagihanNominal').value = '';
+
+      await muatTagihan();
+
+      if (langsungWa && data && data.id) {
+        kirimWaTagihan(data.id);
+      }
+    }
+
+    async function tandaiLunas(id) {
+      await db.from('tagihan').update({ status_bayar: 'Lunas' }).eq('id', id).eq('madrasah_id', madrasahAktif.id);
+      await muatTagihan();
+      if (confirm('Tagihan ditandai LUNAS! Ingin langsung mengirim kuitansi digital ke WhatsApp Wali Santri?')) {
+        kirimWaTagihan(id);
+      }
+    }
+
+    async function muatRekapAbsensi() {
+      const bulanInput = document.getElementById('rekapBulan').value;
+      const kelasFilter = document.getElementById('rekapKelas').value;
+      const tbody = document.getElementById('tabelRekapBody');
+      const logContainer = document.getElementById('listLogHarianRekap');
+
+      if (!bulanInput) return;
+
+      const [tahun, bulan] = bulanInput.split('-');
+      const hariTerakhir = new Date(tahun, bulan, 0).getDate();
+      const tglAwal = `${bulanInput}-01`;
+      const tglAkhir = `${bulanInput}-${String(hariTerakhir).padStart(2, '0')}`;
+
+      const namaBulan = new Date(`${bulanInput}-01`).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+      document.getElementById('judulMadrasahCetak').textContent = `Laporan Kehadiran Santri — ${madrasahAktif.nama_madrasah}`;
+      document.getElementById('judulCetakRekap').textContent = `Periode: ${namaBulan} • Kelas: ${kelasFilter === 'SEMUA' ? 'Semua Kelas' : kelasFilter}`;
+
+      tbody.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-slate-400">Menghitung rekapan bulanan...</td></tr>';
+
+      const { data: absenBulanIni, error } = await db
+        .from('absensi')
+        .select('*, siswa(nis, nama_siswa, kelas), ustadz(nama_ustadz)')
+        .eq('madrasah_id', madrasahAktif.id)
+        .gte('tanggal', tglAwal)
+        .lte('tanggal', tglAkhir)
+        .order('tanggal', { ascending: true });
+
+      if (error) {
+        tbody.innerHTML = `<tr><td colspan="6" class="py-4 text-center text-red-500">Gagal memuat data: ${error.message}</td></tr>`;
+        return;
+      }
+
+      const dataAbsen = absenBulanIni || [];
+      const santriFiltered = kelasFilter === 'SEMUA' ? dataSantriList : dataSantriList.filter(s => s.kelas === kelasFilter);
+      const absenFiltered = kelasFilter === 'SEMUA' ? dataAbsen : dataAbsen.filter(a => a.siswa && a.siswa.kelas === kelasFilter);
+
+      const hariAktifUnik = new Set(absenFiltered.map(a => a.tanggal)).size;
+      document.getElementById('statTotalSantri').textContent = santriFiltered.length;
+      document.getElementById('statTotalHadir').textContent = absenFiltered.length;
+      document.getElementById('statHariAktif').textContent = hariAktifUnik;
+
+      hasilRekapExport = santriFiltered.map((santri, idx) => {
+        const catatanSantri = absenFiltered.filter(a => a.siswa_id === santri.id);
+        const daftarTgl = catatanSantri.map(c => {
+          const d = new Date(c.tanggal);
+          return `${d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })} (${c.status})`;
+        });
+
+        return {
+          no: idx + 1,
+          nis: santri.nis,
+          nama: santri.nama_siswa,
+          kelas: santri.kelas,
+          totalHadir: catatanSantri.filter(c => c.status === 'Hadir').length,
+          rincianTanggal: daftarTgl.length > 0 ? daftarTgl.join(', ') : '-'
+        };
+      });
+
+      if (hasilRekapExport.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-slate-400">Tidak ada data santri pada kelas ini.</td></tr>';
+      } else {
+        tbody.innerHTML = hasilRekapExport.map(row => `
+          <tr class="hover:bg-emerald-50/40">
+            <td class="py-2.5 px-3 font-medium text-slate-500">${row.no}</td>
+            <td class="py-2.5 px-3 font-semibold text-slate-700">${row.nis}</td>
+            <td class="py-2.5 px-3 font-bold text-emerald-950">${row.nama}</td>
+            <td class="py-2.5 px-3 text-slate-600">${row.kelas}</td>
+            <td class="py-2.5 px-3 text-center">
+              <span class="${row.totalHadir > 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-500'} font-extrabold px-2.5 py-1 rounded-full">
+                ${row.totalHadir} Hari
+              </span>
+            </td>
+            <td class="py-2.5 px-3 text-[11px] text-slate-500">${row.rincianTanggal}</td>
+          </tr>
+        `).join('');
+      }
+
+      if (absenFiltered.length === 0) {
+        logContainer.innerHTML = '<p class="text-xs text-slate-400 text-center py-4">Belum ada catatan kehadiran pada bulan ini.</p>';
+      } else {
+        const logTerbaru = [...absenFiltered].reverse();
+        logContainer.innerHTML = logTerbaru.map(item => `
+          <div class="flex justify-between items-center bg-emerald-50/40 p-3 rounded-xl border border-emerald-200/70">
+            <div>
+              <p class="font-bold text-xs text-emerald-950">
+                ${item.siswa ? item.siswa.nama_siswa : 'Santri'}
+                <span class="font-normal text-slate-500">(${item.siswa ? item.siswa.kelas : '-'})</span>
+                <span class="ml-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${item.status === 'Hadir' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${item.status}</span>
+              </p>
+              <p class="text-[11px] text-slate-500">
+                📅 ${item.tanggal} • ⏰ ${item.waktu_masuk ? item.waktu_masuk.slice(0, 5) : '-'} WIB • ${item.ustadz ? item.ustadz.nama_ustadz : 'Ustadz'}
+              </p>
+            </div>
+            ${item.foto_url ? `
+              <button onclick="lihatFoto('${item.foto_url}', '${item.siswa ? item.siswa.nama_siswa : 'Santri'} (${item.tanggal} - ${item.status})')"
+                class="text-[11px] bg-emerald-100 hover:bg-emerald-200 text-emerald-800 font-bold px-3 py-1.5 rounded-lg shrink-0">
+                🖼️ Lihat Bukti
+              </button>
+            ` : ''}
+          </div>
+        `).join('');
+      }
+    }
+
+    function lihatFoto(url, caption) {
+      document.getElementById('modalFotoImg').src = url;
+      document.getElementById('modalFotoCaption').textContent = caption;
+      document.getElementById('modalFoto').classList.remove('hidden');
+    }
+
+    function tutupModalFoto() {
+      document.getElementById('modalFoto').classList.add('hidden');
+    }
+
+    function exportRekapCSV() {
+      if (hasilRekapExport.length === 0) return alert('Tidak ada data untuk diunduh.');
+
+      const bulan = document.getElementById('rekapBulan').value;
+      const kelas = document.getElementById('rekapKelas').value;
+
+      let csv = '\uFEFFNo,NIS,Nama Santri,Kelas,Total Hadir (Hari),Rincian Tanggal\n';
+      hasilRekapExport.forEach(r => {
+        csv += `${r.no},"${r.nis}","${r.nama}","${r.kelas}",${r.totalHadir},"${r.rincianTanggal}"\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Rekap_${madrasahAktif.kode_madrasah}_${kelas.replace(/\s+/g, '_')}_${bulan}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    async function hapusData(tabel, id) {
+      if (!confirm('Yakin ingin menghapus data ini?')) return;
+      const { error } = await db.from(tabel).delete().eq('id', id).eq('madrasah_id', madrasahAktif.id);
+      if (error) return alert('Gagal menghapus: ' + error.message);
+      muatSemuaData();
+    }
+  </script>
+</body>
+</html>
