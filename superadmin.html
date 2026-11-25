@@ -547,14 +547,20 @@
         return alert('Gagal membuat madrasah (pastikan kode unik belum dipakai): ' + error.message);
       }
 
-      // Otomatis buatkan akun Admin untuk madrasah baru ini
-      await db.from('admin').insert([{
-        madrasah_id: madrasahBaru.id,
-        pin_admin: pinAdmin
-      }]);
+      const { error: errAdmin } = await db
+        .from('admin')
+        .insert([{
+          madrasah_id: madrasahBaru.id,
+          pin_admin: pinAdmin
+        }]);
 
       btn.textContent = 'Terbitkan Portal Madrasah Baru';
       btn.disabled = false;
+
+      if (errAdmin) {
+        await muatDataGlobal();
+        return alert('Portal madrasah terbuat, tetapi PIN Admin gagal tersimpan: ' + errAdmin.message + '\nSilakan tekan tombol Reset PIN.');
+      }
 
       document.getElementById('baruNamaMadrasah').value = '';
       document.getElementById('baruKodeMadrasah').value = '';
@@ -570,10 +576,23 @@
       if (!pinBaru || pinBaru.trim().length < 4) return;
 
       const existing = adminPinMap[madrasahId];
+      let res;
+
       if (existing) {
-        await db.from('admin').update({ pin_admin: pinBaru.trim() }).eq('id', existing.id);
+        res = await db
+          .from('admin')
+          .update({ pin_admin: pinBaru.trim() })
+          .eq('id', existing.id)
+          .select();
       } else {
-        await db.from('admin').insert([{ madrasah_id: madrasahId, pin_admin: pinBaru.trim() }]);
+        res = await db
+          .from('admin')
+          .insert([{ madrasah_id: madrasahId, pin_admin: pinBaru.trim() }])
+          .select();
+      }
+
+      if (res.error || !res.data || res.data.length === 0) {
+        return alert('Gagal menyimpan PIN ke database! ' + (res.error ? res.error.message : 'Periksa RLS Policy tabel admin.'));
       }
 
       await muatDataGlobal();
@@ -581,7 +600,15 @@
     }
 
     async function toggleStatusMadrasah(id, statusSekarang) {
-      await db.from('madrasah').update({ status_aktif: !statusSekarang }).eq('id', id);
+      const { data, error } = await db
+        .from('madrasah')
+        .update({ status_aktif: !statusSekarang })
+        .eq('id', id)
+        .select();
+
+      if (error || !data || data.length === 0) {
+        return alert('Gagal mengubah status madrasah! Periksa RLS Policy tabel madrasah.');
+      }
       muatDataGlobal();
     }
 
