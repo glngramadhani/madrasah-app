@@ -551,6 +551,7 @@
         .from('admin')
         .insert([{
           madrasah_id: madrasahBaru.id,
+          nama_admin: `Admin ${nama}`,
           pin_admin: pinAdmin
         }]);
 
@@ -587,7 +588,11 @@
       } else {
         res = await db
           .from('admin')
-          .insert([{ madrasah_id: madrasahId, pin_admin: pinBaru.trim() }])
+          .insert([{
+            madrasah_id: madrasahId,
+            nama_admin: `Admin ${namaMadrasah}`,
+            pin_admin: pinBaru.trim()
+          }])
           .select();
       }
 
@@ -621,3 +626,4 @@
   </script>
 </body>
 </html>
+```[cite: 7]
